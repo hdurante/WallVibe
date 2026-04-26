@@ -1,0 +1,3 @@
+# Este proyecto usa solo librerías estándar de Python.
+# Tkinter viene preinstalado en la mayoría de distribuciones Linux.
+# No hay dependencias externas requeridas.
