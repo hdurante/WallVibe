@@ -6,6 +6,7 @@ AUTOSTART_DIR="$HOME/.config/autostart"
 DESKTOP_FILE="$AUTOSTART_DIR/gnome-extra-tools-wallpaper.desktop"
 OLD_DESKTOP_FILE="$AUTOSTART_DIR/gnome-tools-wallpaper.desktop"
 PYTHON_BIN="$(command -v python3)"
+ICON_PATH="$PROJECT_DIR/assets/gnome-ico.png"
 
 mkdir -p "$AUTOSTART_DIR"
 rm -f "$OLD_DESKTOP_FILE"
@@ -16,6 +17,8 @@ Type=Application
 Name=GNOME Extra Tools Wallpaper Daemon
 Comment=Rotacion de wallpapers desde config.json
 Exec=$PYTHON_BIN $PROJECT_DIR/wallpaper_daemon.py
+Path=$PROJECT_DIR
+Icon=$ICON_PATH
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF

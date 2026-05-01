@@ -8,6 +8,7 @@ import threading
 from pathlib import Path
 
 from gnome_tools.config import ConfigManager
+from gnome_tools.config import ConfigManager, resolve_config_path
 from gnome_tools.wallpaper import WallpaperRotator
 
 BASE_DIR = Path(__file__).parent
@@ -27,7 +28,8 @@ class WallpaperDaemon:
         config_data = manager.load()
 
         wallpaper = config_data.get("wallpaper", {})
-        folder = Path(str(wallpaper.get("folder", "")).strip())
+        raw_folder = str(wallpaper.get("folder", "")).strip()
+        folder = resolve_config_path(self.config_path.parent, raw_folder)
         interval = int(wallpaper.get("interval_minutes", 60))
         extensions = wallpaper.get("extensions", [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"])
         set_dark_variant = bool(wallpaper.get("set_dark_variant", True))
@@ -121,7 +123,8 @@ def run_once(config_path: Path) -> int:
     config_data = manager.load()
     wallpaper = config_data.get("wallpaper", {})
 
-    folder = Path(str(wallpaper.get("folder", "")).strip())
+    raw_folder = str(wallpaper.get("folder", "")).strip()
+    folder = resolve_config_path(config_path.parent, raw_folder)
     interval = int(wallpaper.get("interval_minutes", 60))
     extensions = wallpaper.get("extensions", [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"])
     set_dark_variant = bool(wallpaper.get("set_dark_variant", True))

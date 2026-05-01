@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_CONFIG: dict[str, Any] = {
+    "ui": {
+        "language": "auto",
+    },
     "ptyxis": {
-        "profile_id": "",
         "opacity": 0.85,
     },
     "wallpaper": {
@@ -17,6 +19,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "set_dark_variant": True,
     },
 }
+
+
+def resolve_config_path(base_path: Path, configured_path: str) -> Path:
+    path = Path(configured_path).expanduser()
+    if path.is_absolute():
+        return path
+    return (base_path / path).resolve()
 
 
 def _merge_defaults(user_config: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:

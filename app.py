@@ -4,7 +4,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from gnome_tools.config import ConfigManager
+from gnome_tools.config import ConfigManager, resolve_config_path
 from gnome_tools.daemon_control import (
     disable_autostart,
     enable_autostart,
@@ -22,25 +22,29 @@ from gnome_tools.gnome_controls import (
     open_ptyxis,
     set_ptyxis_opacity,
 )
-from gnome_tools.i18n import t
+from gnome_tools.i18n import set_language, t
 from gnome_tools.wallpaper import WallpaperRotator
 
 BASE_DIR = Path(__file__).parent
 CONFIG_PATH = BASE_DIR / "config.json"
 ICON_PATH = BASE_DIR / "assets" / "gnome-ico.png"
+APP_WM_CLASS = "GnomeExtraTools"
+
+LANGUAGE_CODES = {"auto", "es", "en", "zh", "ja", "de"}
 
 
 class GnomeToolsApp(tk.Tk):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(className=APP_WM_CLASS)
+        self.config_manager = ConfigManager(CONFIG_PATH)
+        self.config_data = self.config_manager.load()
+        self._apply_language_from_config()
+
         self.title(t("app_title"))
         self.geometry("700x550")
         self.minsize(650, 500)
         self._icon_image: tk.PhotoImage | None = None
         self._configure_window_icon()
-
-        self.config_manager = ConfigManager(CONFIG_PATH)
-        self.config_data = self.config_manager.load()
 
         self.rotator: WallpaperRotator | None = None
         self._opacity_debounce_id: str | None = None
@@ -48,6 +52,118 @@ class GnomeToolsApp(tk.Tk):
         self._build_ui()
         self._load_config_into_form()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _apply_language_from_config(self) -> None:
+        ui = self.config_data.get("ui", {})
+        language = str(ui.get("language", "auto")).strip().lower()
+        if language not in LANGUAGE_CODES:
+            language = "auto"
+
+        if language == "auto":
+            set_language(None)
+        else:
+            set_language(language)
+
+    def _build_menu(self) -> None:
+        menu_bar = tk.Menu(self)
+        tools_menu = tk.Menu(menu_bar, tearoff=0)
+        tools_menu.add_command(label=t("menu_select_language"), command=self.open_language_dialog)
+        menu_bar.add_cascade(label=t("menu_tools"), menu=tools_menu)
+        self.config(menu=menu_bar)
+
+    def _snapshot_form_state(self) -> dict[str, str | bool]:
+        state: dict[str, str | bool] = {}
+        if hasattr(self, "folder_var"):
+            state["folder"] = self.folder_var.get()
+        if hasattr(self, "interval_var"):
+            state["interval"] = self.interval_var.get()
+        if hasattr(self, "dark_variant_var"):
+            state["dark_variant"] = bool(self.dark_variant_var.get())
+        if hasattr(self, "profile_id_var"):
+            state["profile_id"] = self.profile_id_var.get()
+        if hasattr(self, "opacity_var"):
+            state["opacity"] = str(int(self.opacity_var.get()))
+        return state
+
+    def _restore_form_state(self, state: dict[str, str | bool]) -> None:
+        if "folder" in state:
+            self.folder_var.set(str(state["folder"]))
+        if "interval" in state:
+            self.interval_var.set(str(state["interval"]))
+        if "dark_variant" in state:
+            self.dark_variant_var.set(bool(state["dark_variant"]))
+        if "profile_id" in state:
+            self.profile_id_var.set(str(state["profile_id"]))
+        if "opacity" in state:
+            opacity_percent = int(str(state["opacity"]))
+            self.opacity_var.set(opacity_percent)
+            self.opacity_label.config(text=f"{opacity_percent}%")
+        self.refresh_daemon_state()
+
+    def _rebuild_ui_for_language(self) -> None:
+        state = self._snapshot_form_state()
+        for child in self.winfo_children():
+            child.destroy()
+        self._build_ui()
+        self._restore_form_state(state)
+        self.title(t("app_title"))
+
+    def open_language_dialog(self) -> None:
+        dialog = tk.Toplevel(self)
+        dialog.title(t("language_dialog_title"))
+        dialog.transient(self)
+        dialog.grab_set()
+        dialog.resizable(False, False)
+
+        x = self.winfo_pointerx() + 10
+        y = self.winfo_pointery() + 10
+        dialog.geometry(f"380x180+{x}+{y}")
+
+        current_lang = str(self.config_data.get("ui", {}).get("language", "auto"))
+        selected_code = current_lang if current_lang in LANGUAGE_CODES else "auto"
+
+        frame = ttk.Frame(dialog, padding=12)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text=t("language_dialog_message"), wraplength=340).pack(anchor="w", pady=(0, 8))
+
+        # Keep language names fixed in their native form so users can always recover the UI language.
+        options = [
+            ("Sistema / System", "auto"),
+            ("Español", "es"),
+            ("English", "en"),
+            ("中文", "zh"),
+            ("日本語", "ja"),
+            ("Deutsch", "de"),
+        ]
+        label_to_code = {label: code for label, code in options}
+        code_to_label = {code: label for label, code in options}
+
+        lang_display_var = tk.StringVar(value=code_to_label.get(selected_code, "Sistema / System"))
+        language_combo = ttk.Combobox(
+            frame,
+            textvariable=lang_display_var,
+            state="readonly",
+            values=[label for label, _ in options],
+        )
+        language_combo.pack(fill=tk.X, pady=(0, 8))
+
+        buttons = ttk.Frame(frame)
+        buttons.pack(fill=tk.X)
+
+        def _apply() -> None:
+            selected_label = lang_display_var.get()
+            selected = label_to_code.get(selected_label, "auto")
+            self.config_data.setdefault("ui", {})["language"] = selected
+            self.config_manager.config = self.config_data
+            self.config_manager.save()
+            self._apply_language_from_config()
+            dialog.destroy()
+            self._rebuild_ui_for_language()
+            self.status_var.set(t("language_changed"))
+
+        ttk.Button(buttons, text=t("language_apply"), command=_apply).pack(side=tk.RIGHT, padx=4)
+        ttk.Button(buttons, text=t("language_cancel"), command=dialog.destroy).pack(side=tk.RIGHT)
 
     def _configure_window_icon(self) -> None:
         if not ICON_PATH.exists():
@@ -61,6 +177,7 @@ class GnomeToolsApp(tk.Tk):
             self._icon_image = None
 
     def _build_ui(self) -> None:
+        self._build_menu()
         root = ttk.Frame(self, padding=12)
         root.pack(fill=tk.BOTH, expand=True)
 
@@ -112,22 +229,26 @@ class GnomeToolsApp(tk.Tk):
         ttk.Button(buttons, text=t("try_now"), command=self.rotate_once).pack(side=tk.LEFT, padx=4)
         ttk.Button(buttons, text=t("start"), command=self.start_rotation).pack(side=tk.LEFT, padx=4)
         ttk.Button(buttons, text=t("stop"), command=self.stop_rotation).pack(side=tk.LEFT, padx=4)
+        ttk.Button(buttons, text=t("apply_wallpaper"), command=self.apply_wallpaper_config).pack(side=tk.LEFT, padx=4)
 
         daemon_frame = ttk.LabelFrame(wallpaper_frame, text=t("daemon_section"), padding=8)
         daemon_frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=6, pady=8)
 
-        daemon_buttons = ttk.Frame(daemon_frame)
-        daemon_buttons.pack(fill=tk.X)
-        ttk.Button(daemon_buttons, text=t("start_daemon"), command=self.start_wallpaper_daemon).pack(
+        daemon_buttons_top = ttk.Frame(daemon_frame)
+        daemon_buttons_top.pack(fill=tk.X)
+        ttk.Button(daemon_buttons_top, text=t("start_daemon"), command=self.start_wallpaper_daemon).pack(
             side=tk.LEFT,
             padx=4,
         )
-        ttk.Button(daemon_buttons, text=t("stop_daemon"), command=self.stop_wallpaper_daemon).pack(
+        ttk.Button(daemon_buttons_top, text=t("stop_daemon"), command=self.stop_wallpaper_daemon).pack(
             side=tk.LEFT,
             padx=4,
         )
+
+        daemon_buttons_bottom = ttk.Frame(daemon_frame)
+        daemon_buttons_bottom.pack(fill=tk.X, pady=(6, 0))
         ttk.Button(
-            daemon_buttons,
+            daemon_buttons_bottom,
             text=t("enable_autostart"),
             command=self.enable_wallpaper_autostart,
         ).pack(
@@ -135,7 +256,7 @@ class GnomeToolsApp(tk.Tk):
             padx=4,
         )
         ttk.Button(
-            daemon_buttons,
+            daemon_buttons_bottom,
             text=t("disable_autostart"),
             command=self.disable_wallpaper_autostart,
         ).pack(
@@ -224,10 +345,7 @@ class GnomeToolsApp(tk.Tk):
         ptyxis = self.config_data.get("ptyxis", {})
         wallpaper = self.config_data.get("wallpaper", {})
 
-        profile_id = str(ptyxis.get("profile_id", "")).strip()
-        if not profile_id:
-            profile_id = get_ptyxis_current_profile_id()
-        self.profile_id_var.set(profile_id)
+        self.profile_id_var.set(get_ptyxis_current_profile_id())
 
         opacity_float = float(ptyxis.get("opacity", 0.85))
         opacity_percent = int(opacity_float * 100)
@@ -263,7 +381,6 @@ class GnomeToolsApp(tk.Tk):
         opacity_float = opacity_percent / 100.0
 
         self.config_data["ptyxis"] = {
-            "profile_id": self.profile_id_var.get().strip(),
             "opacity": round(opacity_float, 2),
         }
 
@@ -335,7 +452,7 @@ class GnomeToolsApp(tk.Tk):
             messagebox.showerror(t("gsettings_error"), str(exc))
 
     def _build_rotator(self) -> WallpaperRotator:
-        folder = Path(self.folder_var.get().strip())
+        folder = resolve_config_path(CONFIG_PATH.parent, self.folder_var.get().strip())
         interval = int(self.interval_var.get())
         extensions = self.config_data.get("wallpaper", {}).get(
             "extensions",
@@ -377,6 +494,26 @@ class GnomeToolsApp(tk.Tk):
         if self.rotator:
             self.rotator.stop()
         self.status_var.set(t("rotation_stopped"))
+
+    def apply_wallpaper_config(self) -> None:
+        try:
+            self._update_config_from_form()
+            self.save_config()
+
+            # Detener daemon si está corriendo
+            if is_daemon_running(BASE_DIR):
+                stop_daemon(BASE_DIR)
+
+            # Detener rotador local si está activo
+            if self.rotator and self.rotator.is_running:
+                self.rotator.stop()
+
+            # Reiniciar daemon con nuevos valores
+            started = start_daemon(BASE_DIR)
+            self.refresh_daemon_state()
+            self.status_var.set(t("daemon_restarted") if started else t("daemon_restart_failed"))
+        except Exception as exc:  # noqa: BLE001
+            messagebox.showerror(t("error"), str(exc))
 
     def refresh_daemon_state(self) -> None:
         daemon_text = t("daemon_running") if is_daemon_running(BASE_DIR) else t("daemon_stopped_state")

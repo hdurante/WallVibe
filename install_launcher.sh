@@ -29,6 +29,7 @@ Icon=$ICON_PATH
 Terminal=false
 Categories=Utility;Settings;
 StartupNotify=true
+StartupWMClass=GnomeExtraTools
 EOF
 
 chmod +x "$DESKTOP_FILE"

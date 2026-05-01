@@ -1,6 +1,8 @@
 {
+  "ui": {
+    "language": "es"
+  },
   "ptyxis": {
-    "profile_id": "e8fcf5567c3e1443960a4e4a69eaa2ae",
     "opacity": 0.95
   },
   "wallpaper": {

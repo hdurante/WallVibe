@@ -4,11 +4,13 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 AUTOSTART_FILE_NAME = "gnome-extra-tools-wallpaper.desktop"
 LEGACY_AUTOSTART_FILE_NAME = "gnome-tools-wallpaper.desktop"
 PID_FILE_NAME = ".wallpaper_daemon.pid"
+ICON_FILE_NAME = "gnome-ico.png"
 
 
 def autostart_file_path() -> Path:
@@ -21,6 +23,10 @@ def legacy_autostart_file_path() -> Path:
 
 def pid_file_path(project_dir: Path) -> Path:
     return project_dir / PID_FILE_NAME
+
+
+def icon_file_path(project_dir: Path) -> Path:
+    return project_dir / "assets" / ICON_FILE_NAME
 
 
 def daemon_command(project_dir: Path, python_executable: str | None = None) -> list[str]:
@@ -84,14 +90,24 @@ def start_daemon(project_dir: Path, python_executable: str | None = None) -> boo
         return False
 
     cmd = daemon_command(project_dir, python_executable)
-    subprocess.Popen(  # noqa: S603
+    process = subprocess.Popen(  # noqa: S603
         cmd,
         cwd=str(project_dir),
         start_new_session=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    return True
+
+    pid_path = pid_file_path(project_dir)
+    deadline = time.monotonic() + 2.0
+    while time.monotonic() < deadline:
+        if is_daemon_running(project_dir):
+            return True
+        if process.poll() is not None:
+            return False
+        time.sleep(0.05)
+
+    return is_daemon_running(project_dir)
 
 
 def stop_daemon(project_dir: Path) -> bool:
@@ -120,6 +136,7 @@ def enable_autostart(project_dir: Path, python_executable: str | None = None) ->
 
     command = daemon_command(project_dir, python_executable)
     exec_line = " ".join(_shell_quote(part) for part in command)
+    icon_path = icon_file_path(project_dir)
 
     desktop_content = "\n".join(
         [
@@ -128,6 +145,8 @@ def enable_autostart(project_dir: Path, python_executable: str | None = None) ->
             "Name=GNOME Extra Tools Wallpaper Daemon",
             "Comment=Rotacion de wallpapers desde config.json",
             f"Exec={exec_line}",
+            f"Path={project_dir}",
+            f"Icon={icon_path}",
             "Terminal=false",
             "X-GNOME-Autostart-enabled=true",
             "",

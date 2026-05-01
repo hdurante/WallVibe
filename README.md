@@ -142,7 +142,6 @@ Al primer arranque se crea `config.json` automáticamente. Ejemplo:
 ```json
 {
   "ptyxis": {
-    "profile_id": "<id-ptyxis>",
     "opacity": 0.85
   },
   "wallpaper": {
