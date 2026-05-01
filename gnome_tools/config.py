@@ -11,7 +11,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "opacity": 0.85,
     },
     "wallpaper": {
-        "folder": "",
+        "folder": "./Wallpaper",
         "interval_minutes": 60,
         "extensions": [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"],
         "set_dark_variant": True,

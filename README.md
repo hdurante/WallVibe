@@ -154,6 +154,14 @@ Al primer arranque se crea `config.json` automáticamente. Ejemplo:
 }
 ```
 
+## Licencia de wallpapers de ejemplo
+
+Las imagenes dentro de la carpeta `Wallpaper/` se distribuyen con licencia propia para evitar ambiguedades con la licencia del codigo.
+
+- Licencia: CC BY 4.0
+- Detalle: `Wallpaper/LICENSE.md`
+- Contexto y uso: `Wallpaper/README.md`
+
 ## Nota sobre el ID de perfil de Ptyxis
 
 El comando equivalente es:

@@ -63,7 +63,6 @@ class GnomeToolsApp(tk.Tk):
         root.pack(fill=tk.BOTH, expand=True)
 
         ptyxis_frame = ttk.LabelFrame(root, text="Ptyxis", padding=10)
-        ptyxis_frame.pack(fill=tk.X, padx=4, pady=6)
 
         ttk.Label(ptyxis_frame, text="Profile ID:").grid(row=0, column=0, sticky="w", padx=6, pady=6)
         self.profile_id_var = tk.StringVar()
@@ -93,6 +92,7 @@ class GnomeToolsApp(tk.Tk):
             padx=6,
             pady=6,
         )
+        self._opacity_debounce_id: str | None = None
         self.opacity_var = tk.IntVar(value=85)
         self.opacity_label = ttk.Label(ptyxis_frame, text="85%", width=5)
         self.opacity_label.grid(
@@ -125,6 +125,8 @@ class GnomeToolsApp(tk.Tk):
 
         wallpaper_frame = ttk.LabelFrame(root, text="Rotación de wallpapers", padding=10)
         wallpaper_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=6)
+
+        ptyxis_frame.pack(fill=tk.X, padx=4, pady=6)
 
         ttk.Label(wallpaper_frame, text="Carpeta:").grid(row=0, column=0, sticky="w", padx=6, pady=6)
         self.folder_var = tk.StringVar()
@@ -233,6 +235,9 @@ class GnomeToolsApp(tk.Tk):
     def _on_opacity_change(self, value: str) -> None:
         percent = int(float(value))
         self.opacity_label.config(text=f"{percent}%")
+        if self._opacity_debounce_id is not None:
+            self.after_cancel(self._opacity_debounce_id)
+        self._opacity_debounce_id = self.after(400, self._apply_opacity_silent)
 
     def toggle_profile_id_edit(self) -> None:
         is_readonly = self.profile_id_entry.cget("state") == "readonly"
@@ -278,6 +283,17 @@ class GnomeToolsApp(tk.Tk):
         selected = filedialog.askdirectory(title="Selecciona carpeta de imágenes")
         if selected:
             self.folder_var.set(selected)
+
+    def _apply_opacity_silent(self) -> None:
+        """Aplica la opacidad directamente sin abrir terminales ni mostrar diálogos."""
+        try:
+            profile_id = self.profile_id_var.get().strip()
+            opacity_percent = int(self.opacity_var.get())
+            opacity_float = opacity_percent / 100.0
+            set_ptyxis_opacity(profile_id, opacity_float)
+            self.status_var.set(f"✓ Opacidad aplicada ({opacity_percent}%) al perfil {profile_id}")
+        except (ValueError, GSettingsError):
+            pass  # Errores silenciosos durante el arrastre; el botón Aplicar los mostrará
 
     def apply_opacity(self) -> None:
         try:

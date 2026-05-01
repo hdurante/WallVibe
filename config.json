@@ -4,7 +4,7 @@
     "opacity": 0.95
   },
   "wallpaper": {
-    "folder": "/home/hdurante/Documentos/Workspace/Archivos/Wallpapers",
+    "folder": "/home/hdurante/Documentos/Workspace/Python/gnome-extra-tools/Wallpaper",
     "interval_minutes": 60,
     "extensions": [
       ".jpg",
