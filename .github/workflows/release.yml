@@ -57,8 +57,7 @@ jobs:
       - name: Package binary (Lightweight)
         run: |
           cd package-lightweight
-          tar -czf gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz .
-          mv gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz ../release/
+          tar -czf ../release/gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz .
       
       - name: Upload lightweight artifacts
         uses: actions/upload-artifact@v4
@@ -116,8 +115,7 @@ jobs:
       - name: Package binary with Wallpaper examples (Complete)
         run: |
           cd package-complete
-          tar -czf gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz .
-          mv gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz ../release/
+          tar -czf ../release/gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz .
       
       - name: Upload complete artifacts
         uses: actions/upload-artifact@v4
