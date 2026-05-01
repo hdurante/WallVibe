@@ -30,6 +30,20 @@ def icon_file_path(project_dir: Path) -> Path:
 
 
 def daemon_command(project_dir: Path, python_executable: str | None = None) -> list[str]:
+    # Detectar si estamos en un binario compilado por PyInstaller
+    is_frozen = getattr(sys, 'frozen', False)
+    
+    if is_frozen:
+        # Si estamos en PyInstaller, buscar el daemon compilado
+        daemon_executable = project_dir / "gnome-extra-tools-daemon"
+        if daemon_executable.exists():
+            return [str(daemon_executable)]
+        # Fallback: intentar en el directorio actual (mismo directorio del ejecutable)
+        daemon_executable = Path(sys.executable).parent / "gnome-extra-tools-daemon"
+        if daemon_executable.exists():
+            return [str(daemon_executable)]
+    
+    # Modo desarrollo: ejecutar wallpaper_daemon.py con Python
     python_bin = python_executable or sys.executable or "python3"
     daemon_script = project_dir / "wallpaper_daemon.py"
     config_path = project_dir / "config.json"
