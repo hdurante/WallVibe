@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -595,4 +596,14 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # Detectar si se solicita ejecutar el daemon
+    if len(sys.argv) > 1 and sys.argv[1] == "--daemon":
+        # Ejecutar en modo daemon (sin GUI)
+        from gnome_tools.daemon_main import run_daemon
+        
+        daemon_config = BASE_DIR / "config.json"
+        daemon_pid = BASE_DIR / ".wallpaper_daemon.pid"
+        run_daemon(daemon_config, daemon_pid)
+    else:
+        # Ejecutar modo GUI (default)
+        main()

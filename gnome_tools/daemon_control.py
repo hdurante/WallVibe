@@ -34,28 +34,19 @@ def daemon_command(project_dir: Path, python_executable: str | None = None) -> l
     is_frozen = getattr(sys, 'frozen', False)
     
     if is_frozen:
-        # Si estamos en PyInstaller, buscar el daemon compilado
-        daemon_executable = project_dir / "gnome-extra-tools-daemon"
-        if daemon_executable.exists():
-            return [str(daemon_executable)]
-        # Fallback: intentar en el directorio actual (mismo directorio del ejecutable)
-        daemon_executable = Path(sys.executable).parent / "gnome-extra-tools-daemon"
-        if daemon_executable.exists():
-            return [str(daemon_executable)]
+        # Si estamos compilados, ejecutar el binario unificado con --daemon
+        gnome_tools_exe = Path(sys.executable).parent / "gnome-extra-tools"
+        if gnome_tools_exe.exists():
+            return [str(gnome_tools_exe), "--daemon"]
     
-    # Modo desarrollo: ejecutar wallpaper_daemon.py con Python
+    # Modo desarrollo: ejecutar app.py con --daemon
     python_bin = python_executable or sys.executable or "python3"
-    daemon_script = project_dir / "wallpaper_daemon.py"
-    config_path = project_dir / "config.json"
-    pid_path = pid_file_path(project_dir)
+    app_script = project_dir / "app.py"
 
     return [
         python_bin,
-        str(daemon_script),
-        "--config",
-        str(config_path),
-        "--pid-file",
-        str(pid_path),
+        str(app_script),
+        "--daemon",
     ]
 
 

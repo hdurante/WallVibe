@@ -27,26 +27,18 @@ jobs:
       
       - name: Build with PyInstaller (Lightweight)
         run: |
-          # Build GUI executable
+          # Build unified executable (GUI by default, --daemon for background)
           pyinstaller \
             --onefile \
             --name=gnome-extra-tools \
             --runtime-tmpdir /var/tmp \
             app.py
 
-          # Build daemon executable
-          pyinstaller \
-            --onefile \
-            --name=gnome-extra-tools-daemon \
-            --runtime-tmpdir /var/tmp \
-            wallpaper_daemon.py
-
       - name: Prepare lightweight package layout
         run: |
           rm -rf package-lightweight
           mkdir -p package-lightweight
           cp dist/gnome-extra-tools package-lightweight/
-          cp dist/gnome-extra-tools-daemon package-lightweight/
           cp config.json package-lightweight/
           cp README.md package-lightweight/
           cp -r assets package-lightweight/
@@ -90,26 +82,18 @@ jobs:
       
       - name: Build with PyInstaller (Complete)
         run: |
-          # Build GUI executable
+          # Build unified executable (GUI by default, --daemon for background)
           pyinstaller \
             --onefile \
             --name=gnome-extra-tools \
             --runtime-tmpdir /var/tmp \
             app.py
 
-          # Build daemon executable
-          pyinstaller \
-            --onefile \
-            --name=gnome-extra-tools-daemon \
-            --runtime-tmpdir /var/tmp \
-            wallpaper_daemon.py
-
       - name: Prepare complete package layout
         run: |
           rm -rf package-complete
           mkdir -p package-complete
           cp dist/gnome-extra-tools package-complete/
-          cp dist/gnome-extra-tools-daemon package-complete/
           cp config.json package-complete/
           cp README.md package-complete/
           cp -r assets package-complete/
