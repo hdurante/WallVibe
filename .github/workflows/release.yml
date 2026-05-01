@@ -27,21 +27,37 @@ jobs:
       
       - name: Build with PyInstaller (Lightweight)
         run: |
+          # Build GUI executable
           pyinstaller \
             --onefile \
             --name=gnome-extra-tools \
-            --add-data "assets:assets" \
-            --add-data "locale:locale" \
             --runtime-tmpdir /var/tmp \
             app.py
+
+          # Build daemon executable
+          pyinstaller \
+            --onefile \
+            --name=gnome-extra-tools-daemon \
+            --runtime-tmpdir /var/tmp \
+            wallpaper_daemon.py
+
+      - name: Prepare lightweight package layout
+        run: |
+          rm -rf package-lightweight
+          mkdir -p package-lightweight
+          cp dist/gnome-extra-tools package-lightweight/
+          cp dist/gnome-extra-tools-daemon package-lightweight/
+          cp config.json package-lightweight/
+          cp -r assets package-lightweight/
+          cp -r locale package-lightweight/
       
       - name: Create release directory
         run: mkdir -p release
       
       - name: Package binary (Lightweight)
         run: |
-          cd dist
-          tar -czf gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz gnome-extra-tools
+          cd package-lightweight
+          tar -czf gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz .
           mv gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz ../release/
       
       - name: Upload lightweight artifacts
@@ -69,22 +85,38 @@ jobs:
       
       - name: Build with PyInstaller (Complete)
         run: |
+          # Build GUI executable
           pyinstaller \
             --onefile \
             --name=gnome-extra-tools \
-            --add-data "assets:assets" \
-            --add-data "locale:locale" \
-            --add-data "Wallpaper:Wallpaper" \
             --runtime-tmpdir /var/tmp \
             app.py
+
+          # Build daemon executable
+          pyinstaller \
+            --onefile \
+            --name=gnome-extra-tools-daemon \
+            --runtime-tmpdir /var/tmp \
+            wallpaper_daemon.py
+
+      - name: Prepare complete package layout
+        run: |
+          rm -rf package-complete
+          mkdir -p package-complete
+          cp dist/gnome-extra-tools package-complete/
+          cp dist/gnome-extra-tools-daemon package-complete/
+          cp config.json package-complete/
+          cp -r assets package-complete/
+          cp -r locale package-complete/
+          cp -r Wallpaper package-complete/
       
       - name: Create release directory
         run: mkdir -p release
       
       - name: Package binary with Wallpaper examples (Complete)
         run: |
-          cd dist
-          tar -czf gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz gnome-extra-tools
+          cd package-complete
+          tar -czf gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz .
           mv gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz ../release/
       
       - name: Upload complete artifacts

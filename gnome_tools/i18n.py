@@ -3,6 +3,15 @@ import locale
 from pathlib import Path
 
 LOCALE_DIR = Path(__file__).parent.parent / "locale"
+import sys
+
+# Detectar si estamos en PyInstaller para resolver rutas correctamente
+if getattr(sys, 'frozen', False):
+    # Si estamos compilados con PyInstaller, resolver desde el ejecutable
+    LOCALE_DIR = Path(sys.executable).parent / "locale"
+else:
+    # En desarrollo, es relativo al módulo
+    LOCALE_DIR = Path(__file__).parent.parent / "locale"
 SUPPORTED = {
     "es": "es",
     "en": "en",

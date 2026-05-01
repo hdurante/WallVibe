@@ -25,7 +25,14 @@ from gnome_tools.gnome_controls import (
 from gnome_tools.i18n import set_language, t
 from gnome_tools.wallpaper import WallpaperRotator
 
-BASE_DIR = Path(__file__).parent
+# Detectar si estamos en PyInstaller para resolver rutas correctamente
+if getattr(sys, 'frozen', False):
+    # Si estamos compilados con PyInstaller, el directorio base es donde está el ejecutable
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # En desarrollo, es el directorio del script
+    BASE_DIR = Path(__file__).parent
+
 CONFIG_PATH = BASE_DIR / "config.json"
 ICON_PATH = BASE_DIR / "assets" / "gnome-ico.png"
 APP_WM_CLASS = "GnomeExtraTools"

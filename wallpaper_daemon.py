@@ -11,7 +11,14 @@ from gnome_tools.config import ConfigManager
 from gnome_tools.config import ConfigManager, resolve_config_path
 from gnome_tools.wallpaper import WallpaperRotator
 
-BASE_DIR = Path(__file__).parent
+# Detectar si estamos en PyInstaller para resolver rutas correctamente
+if getattr(sys, 'frozen', False):
+    # Si estamos compilados con PyInstaller, el directorio base es donde está el ejecutable
+    BASE_DIR = Path(sys.executable).parent
+else:
+    # En desarrollo, es el directorio del script
+    BASE_DIR = Path(__file__).parent
+
 DEFAULT_CONFIG_PATH = BASE_DIR / "config.json"
 DEFAULT_PID_PATH = BASE_DIR / ".wallpaper_daemon.pid"
 
