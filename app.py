@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import sys
 import tkinter as tk
 from pathlib import Path
@@ -37,6 +38,7 @@ else:
 CONFIG_PATH = BASE_DIR / "config.json"
 ICON_PATH = BASE_DIR / "assets" / "gnome-ico.png"
 APP_WM_CLASS = "GnomeExtraTools"
+APP_LOCK_PATH = Path.home() / ".cache" / "gnome-extra-tools" / "app.lock"
 
 LANGUAGE_CODES = {"auto", "es", "en", "zh", "ja", "de"}
 
@@ -605,8 +607,52 @@ class GnomeToolsApp(tk.Tk):
 
 
 def main() -> None:
-    app = GnomeToolsApp()
-    app.mainloop()
+    lock_handle = _acquire_app_lock()
+    if lock_handle is None:
+        _show_already_running_warning()
+        return
+
+    try:
+        app = GnomeToolsApp()
+        app.mainloop()
+    finally:
+        _release_app_lock(lock_handle)
+
+
+def _acquire_app_lock():
+    APP_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    handle = APP_LOCK_PATH.open("w", encoding="utf-8")
+
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        return None
+
+    handle.write(str(Path.cwd()))
+    handle.flush()
+    return handle
+
+
+def _release_app_lock(handle) -> None:
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        handle.close()
+
+
+def _show_already_running_warning() -> None:
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showwarning(
+            "GNOME Extra Tools",
+            "La aplicacion ya esta abierta en otra ventana.",
+        )
+        root.destroy()
+    except Exception:  # noqa: BLE001
+        # Fallback for non-GUI environments.
+        print("La aplicacion ya esta abierta en otra ventana.")
 
 
 if __name__ == "__main__":

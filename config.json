@@ -1,4 +1,7 @@
 {
+  "app": {
+    "first_run_initialized": true
+  },
   "ui": {
     "language": "es"
   },
@@ -6,7 +9,7 @@
     "opacity": 0.95
   },
   "wallpaper": {
-    "folder": "./Wallpaper",
+    "folder": "./Wallpaper/Ubuntu",
     "interval_minutes": 30,
     "extensions": [
       ".jpg",
@@ -17,6 +20,6 @@
       ".webp"
     ],
     "set_dark_variant": true,
-    "search_subfolders": true
+    "search_subfolders": false
   }
 }

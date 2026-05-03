@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_CONFIG: dict[str, Any] = {
+    "app": {
+        "first_run_initialized": False,
+    },
     "ui": {
         "language": "auto",
     },
@@ -61,7 +64,23 @@ def _build_first_run_config() -> dict[str, Any]:
     config = deepcopy(DEFAULT_CONFIG)
     wallpaper = config.setdefault("wallpaper", {})
     wallpaper["folder"] = _detect_first_run_wallpaper_folder()
+    config.setdefault("app", {})["first_run_initialized"] = True
     return config
+
+
+def _apply_first_run_defaults_if_needed(config: dict[str, Any]) -> bool:
+    app_cfg = config.setdefault("app", {})
+    already_initialized = bool(app_cfg.get("first_run_initialized", False))
+    if already_initialized:
+        return False
+
+    wallpaper = config.setdefault("wallpaper", {})
+    folder = str(wallpaper.get("folder", "")).strip()
+    if not folder or folder == "./Wallpaper":
+        wallpaper["folder"] = _detect_first_run_wallpaper_folder()
+
+    app_cfg["first_run_initialized"] = True
+    return True
 
 
 def resolve_config_path(base_path: Path, configured_path: str) -> Path:
@@ -103,6 +122,8 @@ class ConfigManager:
             raise ValueError("El archivo de configuracion debe contener un objeto JSON.")
 
         self.config = _merge_defaults(data, DEFAULT_CONFIG)
+        if _apply_first_run_defaults_if_needed(self.config):
+            self.save()
         return self.config
 
     def save(self) -> None:
