@@ -8,6 +8,7 @@ from typing import Any
 DEFAULT_CONFIG: dict[str, Any] = {
     "app": {
         "first_run_initialized": False,
+        "distro_folder_migrated": False,
     },
     "ui": {
         "language": "auto",
@@ -22,6 +23,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "set_dark_variant": True,
         "search_subfolders": False,
     },
+}
+
+DEFAULT_DISTRO_FOLDERS = {
+    "./Wallpaper",
+    "./Wallpaper/Ubuntu",
+    "./Wallpaper/Fedora",
+    "./Wallpaper/SuSE",
 }
 
 
@@ -65,6 +73,7 @@ def _build_first_run_config() -> dict[str, Any]:
     wallpaper = config.setdefault("wallpaper", {})
     wallpaper["folder"] = _detect_first_run_wallpaper_folder()
     config.setdefault("app", {})["first_run_initialized"] = True
+    config.setdefault("app", {})["distro_folder_migrated"] = True
     return config
 
 
@@ -80,6 +89,25 @@ def _apply_first_run_defaults_if_needed(config: dict[str, Any]) -> bool:
         wallpaper["folder"] = _detect_first_run_wallpaper_folder()
 
     app_cfg["first_run_initialized"] = True
+    return True
+
+
+def _apply_distro_folder_migration_if_needed(config: dict[str, Any]) -> bool:
+    app_cfg = config.setdefault("app", {})
+    already_migrated = bool(app_cfg.get("distro_folder_migrated", False))
+    if already_migrated:
+        return False
+
+    wallpaper = config.setdefault("wallpaper", {})
+    folder = str(wallpaper.get("folder", "")).strip()
+    detected_folder = _detect_first_run_wallpaper_folder()
+
+    changed = False
+    if folder in DEFAULT_DISTRO_FOLDERS and folder != detected_folder:
+        wallpaper["folder"] = detected_folder
+        changed = True
+
+    app_cfg["distro_folder_migrated"] = True
     return True
 
 
@@ -122,7 +150,9 @@ class ConfigManager:
             raise ValueError("El archivo de configuracion debe contener un objeto JSON.")
 
         self.config = _merge_defaults(data, DEFAULT_CONFIG)
-        if _apply_first_run_defaults_if_needed(self.config):
+        changed = _apply_first_run_defaults_if_needed(self.config)
+        changed = _apply_distro_folder_migration_if_needed(self.config) or changed
+        if changed:
             self.save()
         return self.config
 

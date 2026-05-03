@@ -9,7 +9,7 @@
     "opacity": 0.95
   },
   "wallpaper": {
-    "folder": "./Wallpaper/Ubuntu",
+    "folder": "./Wallpaper",
     "interval_minutes": 30,
     "extensions": [
       ".jpg",
