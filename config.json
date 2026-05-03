@@ -16,6 +16,7 @@
       ".svg",
       ".webp"
     ],
-    "set_dark_variant": true
+    "set_dark_variant": true,
+    "search_subfolders": true
   }
 }

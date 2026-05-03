@@ -18,6 +18,7 @@
   "select": "Select",
   "interval_label": "Interval (min):",
   "dark_variant_label": "Also update in dark mode",
+  "search_subfolders_label": "Search in subfolders (max: root + 1 level)",
   "try_now": "Try now",
   "start": "Start",
   "stop": "Stop",

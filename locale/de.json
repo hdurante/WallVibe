@@ -18,6 +18,7 @@
   "select": "Auswahlen",
   "interval_label": "Intervall (Min):",
   "dark_variant_label": "Auch im Dunkelmodus aktualisieren",
+  "search_subfolders_label": "In Unterordnern suchen (max: Stamm + 1 Ebene)",
   "try_now": "Jetzt testen",
   "start": "Starten",
   "stop": "Stoppen",

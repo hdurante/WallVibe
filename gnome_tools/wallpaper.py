@@ -14,11 +14,13 @@ class WallpaperRotator:
         interval_minutes: int,
         extensions: list[str],
         set_dark_variant: bool = True,
+        search_subfolders: bool = False,
     ) -> None:
         self.folder = folder
         self.interval_minutes = max(1, int(interval_minutes))
         self.extensions = [ext.lower() for ext in extensions]
         self.set_dark_variant = set_dark_variant
+        self.search_subfolders = search_subfolders
 
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
@@ -32,6 +34,21 @@ class WallpaperRotator:
             for path in self.folder.iterdir()
             if path.is_file() and path.suffix.lower() in self.extensions
         ]
+
+        if not self.search_subfolders:
+            return files
+
+        # Search up to two levels total: root folder and one subfolder level.
+        for child in self.folder.iterdir():
+            if not child.is_dir():
+                continue
+
+            files.extend(
+                path
+                for path in child.iterdir()
+                if path.is_file() and path.suffix.lower() in self.extensions
+            )
+
         return files
 
     def rotate_once(self) -> Path:

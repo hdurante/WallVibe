@@ -18,6 +18,7 @@
   "select": "Seleccionar",
   "interval_label": "Intervalo (min):",
   "dark_variant_label": "Actualizar tambien en modo oscuro",
+  "search_subfolders_label": "Buscar en subcarpetas (maximo: raiz + 1 nivel)",
   "try_now": "Probar ahora",
   "start": "Iniciar",
   "stop": "Detener",

@@ -17,8 +17,51 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "interval_minutes": 60,
         "extensions": [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"],
         "set_dark_variant": True,
+        "search_subfolders": False,
     },
 }
+
+
+def _read_os_release() -> dict[str, str]:
+    os_release = Path("/etc/os-release")
+    if not os_release.exists():
+        return {}
+
+    data: dict[str, str] = {}
+    for raw_line in os_release.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip().lower()
+        value = value.strip().strip('"').strip("'")
+        data[key] = value.lower()
+
+    return data
+
+
+def _detect_first_run_wallpaper_folder() -> str:
+    info = _read_os_release()
+    distro_id = info.get("id", "")
+    distro_like = info.get("id_like", "")
+    haystack = f"{distro_id} {distro_like}"
+
+    if any(name in haystack for name in ("opensuse", "suse", "sle")):
+        return "./Wallpaper/SuSE"
+    if "fedora" in haystack:
+        return "./Wallpaper/Fedora"
+    if "ubuntu" in haystack:
+        return "./Wallpaper/Ubuntu"
+
+    return "./Wallpaper"
+
+
+def _build_first_run_config() -> dict[str, Any]:
+    config = deepcopy(DEFAULT_CONFIG)
+    wallpaper = config.setdefault("wallpaper", {})
+    wallpaper["folder"] = _detect_first_run_wallpaper_folder()
+    return config
 
 
 def resolve_config_path(base_path: Path, configured_path: str) -> Path:
@@ -45,13 +88,13 @@ class ConfigManager:
 
     def load(self) -> dict[str, Any]:
         if not self.config_path.exists():
-            self.config = deepcopy(DEFAULT_CONFIG)
+            self.config = _build_first_run_config()
             self.save()
             return self.config
 
         raw = self.config_path.read_text(encoding="utf-8").strip()
         if not raw:
-            self.config = deepcopy(DEFAULT_CONFIG)
+            self.config = _build_first_run_config()
             self.save()
             return self.config
 

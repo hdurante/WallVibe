@@ -34,6 +34,7 @@ class WallpaperDaemon:
         interval = int(wallpaper.get("interval_minutes", 60))
         extensions = wallpaper.get("extensions", [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"])
         set_dark_variant = bool(wallpaper.get("set_dark_variant", True))
+        search_subfolders = bool(wallpaper.get("search_subfolders", False))
 
         if not folder:
             raise ValueError("No hay carpeta configurada. Abre la GUI y guarda una carpeta de wallpapers.")
@@ -43,6 +44,7 @@ class WallpaperDaemon:
             interval_minutes=interval,
             extensions=extensions,
             set_dark_variant=set_dark_variant,
+            search_subfolders=search_subfolders,
         )
 
     def _handle_signal(self, signum: int, _frame) -> None:

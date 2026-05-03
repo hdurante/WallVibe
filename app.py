@@ -16,12 +16,12 @@ from gnome_tools.daemon_control import (
 )
 from gnome_tools.gnome_controls import (
     GSettingsError,
-    ensure_terminal_visible,
-    get_ptyxis_current_profile_id,
-    is_ptyxis_available,
-    is_ptyxis_running,
-    open_ptyxis,
-    set_ptyxis_opacity,
+    detect_opacity_backend,
+    get_current_terminal_profile_id,
+    is_active_opacity_terminal_running,
+    is_opacity_supported_terminal_available,
+    open_active_opacity_terminal,
+    set_terminal_opacity,
 )
 from gnome_tools.i18n import set_language, t
 from gnome_tools.wallpaper import WallpaperRotator
@@ -87,6 +87,8 @@ class GnomeToolsApp(tk.Tk):
             state["interval"] = self.interval_var.get()
         if hasattr(self, "dark_variant_var"):
             state["dark_variant"] = bool(self.dark_variant_var.get())
+        if hasattr(self, "search_subfolders_var"):
+            state["search_subfolders"] = bool(self.search_subfolders_var.get())
         if hasattr(self, "profile_id_var"):
             state["profile_id"] = self.profile_id_var.get()
         if hasattr(self, "opacity_var"):
@@ -100,6 +102,8 @@ class GnomeToolsApp(tk.Tk):
             self.interval_var.set(str(state["interval"]))
         if "dark_variant" in state:
             self.dark_variant_var.set(bool(state["dark_variant"]))
+        if "search_subfolders" in state:
+            self.search_subfolders_var.set(bool(state["search_subfolders"]))
         if "profile_id" in state:
             self.profile_id_var.set(str(state["profile_id"]))
         if "opacity" in state:
@@ -231,8 +235,15 @@ class GnomeToolsApp(tk.Tk):
             variable=self.dark_variant_var,
         ).grid(row=2, column=0, columnspan=2, sticky="w", padx=6, pady=4)
 
+        self.search_subfolders_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            wallpaper_frame,
+            text=t("search_subfolders_label"),
+            variable=self.search_subfolders_var,
+        ).grid(row=3, column=0, columnspan=3, sticky="w", padx=6, pady=4)
+
         buttons = ttk.Frame(wallpaper_frame)
-        buttons.grid(row=3, column=0, columnspan=3, sticky="ew", padx=6, pady=6)
+        buttons.grid(row=4, column=0, columnspan=3, sticky="ew", padx=6, pady=6)
 
         ttk.Button(buttons, text=t("try_now"), command=self.rotate_once).pack(side=tk.LEFT, padx=4)
         ttk.Button(buttons, text=t("start"), command=self.start_rotation).pack(side=tk.LEFT, padx=4)
@@ -240,7 +251,7 @@ class GnomeToolsApp(tk.Tk):
         ttk.Button(buttons, text=t("apply_wallpaper"), command=self.apply_wallpaper_config).pack(side=tk.LEFT, padx=4)
 
         daemon_frame = ttk.LabelFrame(wallpaper_frame, text=t("daemon_section"), padding=8)
-        daemon_frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=6, pady=8)
+        daemon_frame.grid(row=5, column=0, columnspan=3, sticky="ew", padx=6, pady=8)
 
         daemon_buttons_top = ttk.Frame(daemon_frame)
         daemon_buttons_top.pack(fill=tk.X)
@@ -353,7 +364,13 @@ class GnomeToolsApp(tk.Tk):
         ptyxis = self.config_data.get("ptyxis", {})
         wallpaper = self.config_data.get("wallpaper", {})
 
-        self.profile_id_var.set(get_ptyxis_current_profile_id())
+        backend = detect_opacity_backend()
+        if backend == "ptyxis":
+            self.profile_id_var.set(get_current_terminal_profile_id())
+        elif backend == "kgx":
+            self.profile_id_var.set("kgx")
+        else:
+            self.profile_id_var.set("")
 
         opacity_float = float(ptyxis.get("opacity", 0.85))
         opacity_percent = int(opacity_float * 100)
@@ -363,6 +380,7 @@ class GnomeToolsApp(tk.Tk):
         self.folder_var.set(str(wallpaper.get("folder", "")))
         self.interval_var.set(str(wallpaper.get("interval_minutes", 60)))
         self.dark_variant_var.set(bool(wallpaper.get("set_dark_variant", True)))
+        self.search_subfolders_var.set(bool(wallpaper.get("search_subfolders", False)))
         self.refresh_daemon_state()
 
     def _on_opacity_change(self, value: str) -> None:
@@ -400,6 +418,7 @@ class GnomeToolsApp(tk.Tk):
                 [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"],
             ),
             "set_dark_variant": bool(self.dark_variant_var.get()),
+            "search_subfolders": bool(self.search_subfolders_var.get()),
         }
 
     def save_config(self) -> None:
@@ -418,42 +437,36 @@ class GnomeToolsApp(tk.Tk):
 
     def _apply_opacity_silent(self) -> None:
         try:
-            profile_id = self.profile_id_var.get().strip()
             opacity_percent = int(self.opacity_var.get())
             opacity_float = opacity_percent / 100.0
-            set_ptyxis_opacity(profile_id, opacity_float)
-            self.status_var.set(t("opacity_applied", percent=opacity_percent, profile_id=profile_id))
+            profile_id = self.profile_id_var.get().strip()
+            backend = set_terminal_opacity(opacity_float, profile_id)
+            status_target = profile_id if backend == "ptyxis" else backend
+            if not status_target:
+                status_target = "terminal"
+            self.status_var.set(t("opacity_applied", percent=opacity_percent, profile_id=status_target))
         except (ValueError, GSettingsError):
             pass
 
     def apply_opacity(self) -> None:
         try:
-            terminal_name, opened_now = ensure_terminal_visible()
-
-            if not is_ptyxis_available():
-                if terminal_name is None:
-                    messagebox.showwarning(t("no_terminal_title"), t("no_terminal_message"))
-                    self.status_var.set(t("no_terminal_found"))
-                else:
-                    action_text = t("terminal_opened") if opened_now else t("terminal_active")
-                    messagebox.showwarning(
-                        t("compatibility_title"),
-                        t("compatibility_message", terminal_name=terminal_name, action_text=action_text),
-                    )
-                    self.status_var.set(
-                        t("compatibility_status", terminal_name=terminal_name, action_text=action_text)
-                    )
+            if not is_opacity_supported_terminal_available():
+                messagebox.showwarning(t("no_terminal_title"), t("no_terminal_message"))
+                self.status_var.set(t("no_terminal_found"))
                 return
 
-            if not is_ptyxis_running():
-                open_ptyxis()
+            if not is_active_opacity_terminal_running():
+                open_active_opacity_terminal()
                 self.status_var.set(t("ptyxis_opened_confirmation"))
 
-            profile_id = self.profile_id_var.get().strip()
             opacity_percent = int(self.opacity_var.get())
             opacity_float = opacity_percent / 100.0
-            set_ptyxis_opacity(profile_id, opacity_float)
-            self.status_var.set(t("opacity_applied", percent=opacity_percent, profile_id=profile_id))
+            profile_id = self.profile_id_var.get().strip()
+            backend = set_terminal_opacity(opacity_float, profile_id)
+            status_target = profile_id if backend == "ptyxis" else backend
+            if not status_target:
+                status_target = "terminal"
+            self.status_var.set(t("opacity_applied", percent=opacity_percent, profile_id=status_target))
         except ValueError as exc:
             messagebox.showerror(t("invalid_data"), str(exc))
         except GSettingsError as exc:
@@ -471,6 +484,7 @@ class GnomeToolsApp(tk.Tk):
             interval_minutes=interval,
             extensions=extensions,
             set_dark_variant=bool(self.dark_variant_var.get()),
+            search_subfolders=bool(self.search_subfolders_var.get()),
         )
 
     def rotate_once(self) -> None:
