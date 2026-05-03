@@ -98,7 +98,10 @@ jobs:
           cp README.md package-complete/
           cp -r assets package-complete/
           cp -r locale package-complete/
-          cp -r Wallpaper package-complete/
+          mkdir -p package-complete/Wallpaper/Ubuntu package-complete/Wallpaper/Fedora package-complete/Wallpaper/SuSE
+          if [ -d Wallpaper ]; then
+            cp -a Wallpaper/. package-complete/Wallpaper/
+          fi
       
       - name: Create release directory
         run: mkdir -p release
