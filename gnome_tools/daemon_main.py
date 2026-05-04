@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from gnome_tools.config import ConfigManager, resolve_config_path
+from gnome_tools.gnome_controls import GSettingsError, ensure_wayland_wallpaper_compatibility
 from gnome_tools.wallpaper import WallpaperRotator
 import threading
 
@@ -52,6 +53,12 @@ class WallpaperDaemon:
         self.stop()
 
     def start(self) -> None:
+        try:
+            ensure_wayland_wallpaper_compatibility()
+        except GSettingsError as exc:
+            print(f"[wallpaper-daemon] Compatibilidad no soportada: {exc}")
+            sys.exit(1)
+
         self._claim_pid_file()
         self.rotator = self._load_rotator()
 

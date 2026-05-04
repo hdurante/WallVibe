@@ -1,6 +1,7 @@
 {
   "app": {
-    "first_run_initialized": true
+    "first_run_initialized": true,
+    "distro_folder_migrated": true
   },
   "ui": {
     "language": "es"
@@ -9,7 +10,7 @@
     "opacity": 0.95
   },
   "wallpaper": {
-    "folder": "./Wallpaper",
+    "folder": "./Wallpaper/Ubuntu",
     "interval_minutes": 30,
     "extensions": [
       ".jpg",

@@ -29,7 +29,7 @@
   "enable_autostart": "Enable at login",
   "disable_autostart": "Disable at login",
   "daemon_state_default": "Automatic change: stopped | Auto start: disabled",
-  "ptyxis_section": "Ptyxis",
+  "ptyxis_section": "Transparency controls",
   "profile_id_label": "Profile ID:",
   "edit_profile_id": "Edit Profile ID",
   "lock_profile_id": "Lock Profile ID",

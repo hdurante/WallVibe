@@ -29,7 +29,7 @@
   "enable_autostart": "Autostart aktivieren",
   "disable_autostart": "Autostart deaktivieren",
   "daemon_state_default": "Daemon: gestoppt | Autostart: deaktiviert",
-  "ptyxis_section": "Ptyxis",
+  "ptyxis_section": "Transparenzsteuerung",
   "profile_id_label": "Profil-ID:",
   "edit_profile_id": "Profil-ID bearbeiten",
   "lock_profile_id": "Profil-ID sperren",

@@ -29,7 +29,7 @@
   "enable_autostart": "自動起動を有効化",
   "disable_autostart": "自動起動を無効化",
   "daemon_state_default": "デーモン：停止 | 自動起動：無効",
-  "ptyxis_section": "Ptyxis",
+  "ptyxis_section": "透明度コントロール",
   "profile_id_label": "プロファイルID：",
   "edit_profile_id": "Profile ID を編集",
   "lock_profile_id": "Profile ID をロック",

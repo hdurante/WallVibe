@@ -17,10 +17,12 @@ from gnome_tools.daemon_control import (
 )
 from gnome_tools.gnome_controls import (
     GSettingsError,
+    detect_wallpaper_backend,
     detect_opacity_backend,
     get_current_terminal_profile_id,
     is_active_opacity_terminal_running,
     is_opacity_supported_terminal_available,
+    is_wayland_session,
     open_active_opacity_terminal,
     set_terminal_opacity,
 )
@@ -51,8 +53,8 @@ class GnomeToolsApp(tk.Tk):
         self._apply_language_from_config()
 
         self.title(t("app_title"))
-        self.geometry("700x550")
-        self.minsize(650, 500)
+        self.geometry("760x620")
+        self.minsize(700, 560)
         self._icon_image: tk.PhotoImage | None = None
         self._configure_window_icon()
 
@@ -61,7 +63,23 @@ class GnomeToolsApp(tk.Tk):
 
         self._build_ui()
         self._load_config_into_form()
+        self._update_wallpaper_compatibility_status()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _update_wallpaper_compatibility_status(self) -> None:
+        if not is_wayland_session():
+            self.status_var.set("Wallpaper: solo compatible con Wayland (sesion actual no Wayland).")
+            return
+
+        backend = detect_wallpaper_backend()
+        if backend == "gnome":
+            self.status_var.set("Wallpaper: compatibilidad Wayland activa (backend GNOME).")
+            return
+        if backend == "kde":
+            self.status_var.set("Wallpaper: compatibilidad Wayland activa (backend KDE Plasma).")
+            return
+
+        self.status_var.set("Wallpaper: entorno no soportado. Fase siguiente: XFCE Wayland.")
 
     def _apply_language_from_config(self) -> None:
         ui = self.config_data.get("ui", {})
@@ -369,6 +387,8 @@ class GnomeToolsApp(tk.Tk):
         backend = detect_opacity_backend()
         if backend == "ptyxis":
             self.profile_id_var.set(get_current_terminal_profile_id())
+        elif backend == "konsole":
+            self.profile_id_var.set("konsole")
         elif backend == "kgx":
             self.profile_id_var.set("kgx")
         else:

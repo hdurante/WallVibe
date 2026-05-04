@@ -29,7 +29,7 @@
   "enable_autostart": "启用自动启动",
   "disable_autostart": "禁用自动启动",
   "daemon_state_default": "守护进程：已停止 | 自动启动：已禁用",
-  "ptyxis_section": "Ptyxis",
+  "ptyxis_section": "透明度控制",
   "profile_id_label": "配置文件 ID：",
   "edit_profile_id": "编辑 Profile ID",
   "lock_profile_id": "锁定 Profile ID",
