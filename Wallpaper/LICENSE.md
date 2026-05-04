@@ -2,7 +2,7 @@
 
 This folder contains AI-generated example wallpapers used only to demonstrate app features.
 
-Copyright (c) 2026, GNOME Extra Tools contributors.
+Copyright (c) 2026, Linux Wallpaper Vibe contributors.
 
 These image files are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
 

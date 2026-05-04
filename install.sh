@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script de instalación universal para GNOME Extra Tools
+# Script de instalación universal para WallVibe
 
 set -e
 
-echo "=== GNOME Extra Tools - Instalador ==="
+echo "=== WallVibe - Instalador ==="
 echo ""
 
 # Detectar distro

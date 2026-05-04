@@ -4,7 +4,7 @@ import random
 import threading
 from pathlib import Path
 
-from .gnome_controls import set_wallpaper
+from .wallvibe_tools import set_wallpaper
 
 
 class WallpaperRotator:

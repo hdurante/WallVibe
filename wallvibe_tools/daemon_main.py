@@ -6,9 +6,9 @@ import signal
 import sys
 from pathlib import Path
 
-from gnome_tools.config import ConfigManager, resolve_config_path
-from gnome_tools.gnome_controls import GSettingsError, ensure_wayland_wallpaper_compatibility
-from gnome_tools.wallpaper import WallpaperRotator
+from wallvibe_tools.config import ConfigManager, resolve_config_path
+from wallvibe_tools.wallvibe_tools import GSettingsError, ensure_wayland_wallpaper_compatibility
+from wallvibe_tools.wallpaper import WallpaperRotator
 import threading
 
 

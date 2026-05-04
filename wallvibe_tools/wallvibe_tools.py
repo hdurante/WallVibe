@@ -1,36 +1,4 @@
-
 from __future__ import annotations
-
-def set_xfce4_terminal_transparency(opacity: float) -> None:
-    """Ajusta la transparencia en xfce4-terminal editando el archivo de configuración."""
-    # El archivo de configuración suele estar en ~/.config/xfce4/terminal/terminalrc
-    config_path = Path.home() / ".config/xfce4/terminal/terminalrc"
-    if not config_path.exists():
-        raise GSettingsError("No se encontró el archivo de configuración de xfce4-terminal.")
-    lines = config_path.read_text(encoding="utf-8").splitlines()
-    new_lines = []
-    found = False
-    for line in lines:
-        if line.strip().startswith("BackgroundAlpha"):
-            found = True
-            new_lines.append(f"BackgroundAlpha={int(opacity * 100)}")
-        else:
-            new_lines.append(line)
-    if not found:
-        new_lines.append(f"BackgroundAlpha={int(opacity * 100)}")
-    config_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-
-def set_tilix_transparency(opacity: float) -> None:
-    # Tilix usa dconf
-    value = int(opacity * 100)
-    subprocess.run([
-        "dconf", "write", "/com/gexperts/Tilix/profiles/default/background-transparency", str(value)
-    ], check=False)
-
-def set_terminator_transparency(opacity: float) -> None:
-    # Terminator usa gsettings o edición de config, pero no es estándar
-    # Aquí solo se deja un placeholder
-    raise GSettingsError("Soporte para transparencia en Terminator no implementado aún.")
 
 import ast
 import os
@@ -77,6 +45,16 @@ def _run_gsettings_set(schema: str, key: str, value: str, path: str | None = Non
         raise GSettingsError(stderr)
 
 
+def _run_gsettings_get(schema: str, key: str, path: str | None = None) -> str:
+    schema_with_path = f"{schema}:{path}" if path else schema
+    cmd = ["gsettings", "get", schema_with_path, key]
+
+    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip().strip("'\"")
+
+
 def set_ptyxis_opacity(profile_id: str, opacity: float) -> None:
     if not profile_id.strip():
         raise ValueError("Debes indicar el profile_id de Ptyxis.")
@@ -92,23 +70,70 @@ def set_kgx_transparency(opacity: float) -> None:
     if opacity < 0.0 or opacity > 1.0:
         raise ValueError("La opacidad debe estar entre 0.0 y 1.0.")
 
-    # KGX/gnome-console exposes transparency as boolean via gsettings.
     enabled = "true" if opacity < 0.99 else "false"
     _run_gsettings_set("org.gnome.Console", "transparency", enabled)
 
 
-def _run_gsettings_get(schema: str, key: str, path: str | None = None) -> str:
-    schema_with_path = f"{schema}:{path}" if path else schema
-    cmd = ["gsettings", "get", schema_with_path, key]
+def set_xfce4_terminal_transparency(opacity: float) -> None:
+    if opacity < 0.0 or opacity > 1.0:
+        raise ValueError("La opacidad debe estar entre 0.0 y 1.0.")
 
-    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    config_path = Path.home() / ".config/xfce4/terminal/terminalrc"
+    if not config_path.exists():
+        raise GSettingsError("No se encontro el archivo de configuracion de xfce4-terminal.")
+
+    lines = config_path.read_text(encoding="utf-8").splitlines()
+    new_lines: list[str] = []
+    found_alpha = False
+    found_comp = False
+    value = int(opacity * 100)
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("BackgroundAlpha="):
+            new_lines.append(f"BackgroundAlpha={value}")
+            found_alpha = True
+            continue
+        if stripped.startswith("ColorBackgroundVary="):
+            new_lines.append("ColorBackgroundVary=TRUE")
+            found_comp = True
+            continue
+        new_lines.append(line)
+
+    if not found_alpha:
+        new_lines.append(f"BackgroundAlpha={value}")
+    if not found_comp:
+        new_lines.append("ColorBackgroundVary=TRUE")
+
+    config_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+
+def set_tilix_transparency(opacity: float) -> None:
+    if opacity < 0.0 or opacity > 1.0:
+        raise ValueError("La opacidad debe estar entre 0.0 y 1.0.")
+
+    value = int(opacity * 100)
+    result = subprocess.run(
+        [
+            "dconf",
+            "write",
+            "/com/gexperts/Tilix/profiles/default/background-transparency-percent",
+            str(value),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
     if result.returncode != 0:
-        return ""
-    return result.stdout.strip().strip("'\"")
+        stderr = result.stderr.strip() or "No se pudo aplicar transparencia en Tilix."
+        raise GSettingsError(stderr)
+
+
+def set_terminator_transparency(_opacity: float) -> None:
+    raise GSettingsError("Soporte para transparencia en Terminator no implementado aun.")
 
 
 def get_ptyxis_current_profile_id() -> str:
-    """Intenta obtener el profile UUID actual de Ptyxis."""
     profile_uuid = _run_gsettings_get("org.gnome.Ptyxis", "default-profile-uuid")
     if profile_uuid:
         return profile_uuid
@@ -127,7 +152,7 @@ def get_ptyxis_current_profile_id() -> str:
             if isinstance(item, str) and item.strip():
                 return item.strip()
 
-    return profile_uuid or ""
+    return ""
 
 
 def is_ptyxis_available() -> bool:
@@ -179,7 +204,6 @@ def detect_opacity_backend() -> str | None:
             return "terminator"
         return None
 
-    # Distro-aware priority: Ubuntu usually favors Ptyxis, while Fedora/SuSE often use KGX.
     if any(name in distro_hint for name in ("fedora", "suse", "opensuse", "sle")):
         if kgx_supported:
             return "kgx"
@@ -214,8 +238,6 @@ def set_terminal_opacity(opacity: float, profile_id: str = "") -> str:
     if backend == "ptyxis":
         set_ptyxis_opacity(profile_id, opacity)
         return "ptyxis"
-    if backend == "konsole":
-        raise GSettingsError("Konsole detectado. Ajuste de transparencia para Konsole se agregara en la siguiente fase.")
     if backend == "kgx":
         set_kgx_transparency(opacity)
         return "kgx"
@@ -228,7 +250,9 @@ def set_terminal_opacity(opacity: float, profile_id: str = "") -> str:
     if backend == "terminator":
         set_terminator_transparency(opacity)
         return "terminator"
-    raise GSettingsError("No se detecto un backend compatible para opacidad (Ptyxis/KGX/XFCE4-Terminal/Tilix/Terminator).")
+    if backend == "konsole":
+        raise GSettingsError("Konsole detectado. Ajuste de transparencia para Konsole se agregara en la siguiente fase.")
+    raise GSettingsError("No se detecto un backend compatible para opacidad.")
 
 
 def _is_process_running(process_name: str) -> bool:
@@ -251,8 +275,7 @@ def is_konsole_running() -> bool:
 def open_ptyxis() -> None:
     result = subprocess.run(["ptyxis", "--new-window"], check=False, capture_output=True, text=True)
     if result.returncode != 0:
-        stderr = result.stderr.strip() or "No se pudo abrir Ptyxis"
-        raise GSettingsError(stderr)
+        raise GSettingsError(result.stderr.strip() or "No se pudo abrir Ptyxis")
 
 
 def open_kgx() -> None:
@@ -265,8 +288,7 @@ def open_kgx() -> None:
 
     result = subprocess.run(cmd, check=False, capture_output=True, text=True)
     if result.returncode != 0:
-        stderr = result.stderr.strip() or "No se pudo abrir KGX"
-        raise GSettingsError(stderr)
+        raise GSettingsError(result.stderr.strip() or "No se pudo abrir KGX")
 
 
 def open_konsole() -> None:
@@ -275,8 +297,7 @@ def open_konsole() -> None:
 
     result = subprocess.run(["konsole"], check=False, capture_output=True, text=True)
     if result.returncode != 0:
-        stderr = result.stderr.strip() or "No se pudo abrir Konsole"
-        raise GSettingsError(stderr)
+        raise GSettingsError(result.stderr.strip() or "No se pudo abrir Konsole")
 
 
 def is_opacity_supported_terminal_available() -> bool:
@@ -291,6 +312,12 @@ def is_active_opacity_terminal_running() -> bool:
         return is_konsole_running()
     if backend == "kgx":
         return is_kgx_running()
+    if backend == "xfce4-terminal":
+        return _is_process_running("xfce4-terminal")
+    if backend == "tilix":
+        return _is_process_running("tilix")
+    if backend == "terminator":
+        return _is_process_running("terminator")
     return False
 
 
@@ -305,38 +332,16 @@ def open_active_opacity_terminal() -> None:
     if backend == "kgx":
         open_kgx()
         return
+    if backend == "xfce4-terminal":
+        subprocess.run(["xfce4-terminal"], check=False, capture_output=True, text=True)
+        return
+    if backend == "tilix":
+        subprocess.run(["tilix"], check=False, capture_output=True, text=True)
+        return
+    if backend == "terminator":
+        subprocess.run(["terminator"], check=False, capture_output=True, text=True)
+        return
     raise GSettingsError("No se detecto terminal compatible para aplicar opacidad.")
-
-
-def ensure_terminal_visible() -> tuple[str | None, bool]:
-    """Retorna (nombre_terminal, se_abrio_ahora)."""
-    terminal_candidates = [
-        ("ptyxis", ["ptyxis", "--new-window"]),
-        ("kgx", ["kgx"]),
-        ("gnome-terminal", ["gnome-terminal"]),
-        ("xfce4-terminal", ["xfce4-terminal"]),
-        ("konsole", ["konsole"]),
-        ("xterm", ["xterm"]),
-    ]
-
-    available: list[tuple[str, list[str]]] = []
-    for name, cmd in terminal_candidates:
-        if shutil.which(cmd[0]) is not None:
-            available.append((name, cmd))
-
-    if not available:
-        return None, False
-
-    for name, _ in available:
-        if _is_process_running(name):
-            return name, False
-
-    name, cmd = available[0]
-    result = subprocess.run(cmd, check=False, capture_output=True, text=True)
-    if result.returncode != 0:
-        stderr = result.stderr.strip() or f"No se pudo abrir {name}"
-        raise GSettingsError(stderr)
-    return name, True
 
 
 def is_wayland_session() -> bool:
@@ -391,37 +396,18 @@ def _set_wallpaper_gnome(image_path: str, set_dark_variant: bool = True) -> None
 
 
 def _set_wallpaper_kde(image_path: str) -> None:
-    def _set_wallpaper_xfce(image_path: str) -> None:
-        """Cambia el wallpaper en XFCE usando xfconf-query."""
-        if shutil.which("xfconf-query") is None:
-            raise GSettingsError("xfconf-query no encontrado en el sistema.")
-        # Cambia el fondo en todos los monitores detectados
-        import subprocess
-        # Obtener la lista de canales y propiedades
-        props = subprocess.run([
-            "xfconf-query", "-c", "xfce4-desktop", "-l"
-        ], capture_output=True, text=True)
-        if props.returncode != 0:
-            raise GSettingsError("No se pudo obtener las propiedades de xfce4-desktop.")
-        # Buscar propiedades de fondo
-        for line in props.stdout.splitlines():
-            if "last-image" in line:
-                subprocess.run([
-                    "xfconf-query", "-c", "xfce4-desktop", "-p", line, "-s", image_path
-                ])
-        # No se lanza excepción si no hay propiedades, simplemente no cambia nada
     uri = f"file://{image_path}"
     qdbus_cmd = "qdbus6" if shutil.which("qdbus6") is not None else "qdbus"
 
-    script = """
-var allDesktops = desktops();
-for (var i = 0; i < allDesktops.length; i++) {
-    var d = allDesktops[i];
-    d.wallpaperPlugin = "org.kde.image";
-    d.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"];
-    d.writeConfig("Image", "__URI__");
-}
-""".strip().replace("__URI__", uri)
+    script = (
+        "var allDesktops = desktops();"
+        "for (var i = 0; i < allDesktops.length; i++) {"
+        "  var d = allDesktops[i];"
+        "  d.wallpaperPlugin = 'org.kde.image';"
+        "  d.currentConfigGroup = ['Wallpaper', 'org.kde.image', 'General'];"
+        "  d.writeConfig('Image', '__URI__');"
+        "}"
+    ).replace("__URI__", uri)
 
     cmd = [
         qdbus_cmd,
@@ -432,8 +418,33 @@ for (var i = 0; i < allDesktops.length; i++) {
     ]
     result = subprocess.run(cmd, check=False, capture_output=True, text=True)
     if result.returncode != 0:
-        stderr = result.stderr.strip() or "No se pudo aplicar wallpaper en KDE Plasma"
-        raise GSettingsError(stderr)
+        raise GSettingsError(result.stderr.strip() or "No se pudo aplicar wallpaper en KDE Plasma")
+
+
+def _set_wallpaper_xfce(image_path: str) -> None:
+    props = subprocess.run(
+        ["xfconf-query", "-c", "xfce4-desktop", "-l"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if props.returncode != 0:
+        raise GSettingsError("No se pudo obtener las propiedades de xfce4-desktop.")
+
+    updated = False
+    for line in props.stdout.splitlines():
+        if "last-image" not in line:
+            continue
+        subprocess.run(
+            ["xfconf-query", "-c", "xfce4-desktop", "-p", line.strip(), "-s", image_path],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        updated = True
+
+    if not updated:
+        raise GSettingsError("No se detectaron propiedades de wallpaper en xfce4-desktop.")
 
 
 def set_wallpaper(image_path: str, set_dark_variant: bool = True) -> None:

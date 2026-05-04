@@ -7,8 +7,11 @@ import sys
 import time
 from pathlib import Path
 
-AUTOSTART_FILE_NAME = "gnome-extra-tools-wallpaper.desktop"
-LEGACY_AUTOSTART_FILE_NAME = "gnome-tools-wallpaper.desktop"
+AUTOSTART_FILE_NAME = "wallvibe-wallpaper.desktop"
+LEGACY_AUTOSTART_FILE_NAMES = (
+    "gnome-tools-wallpaper.desktop",
+    "gnome-extra-tools-wallpaper.desktop",
+)
 PID_FILE_NAME = ".wallpaper_daemon.pid"
 ICON_FILE_NAME = "gnome-ico.png"
 
@@ -17,8 +20,8 @@ def autostart_file_path() -> Path:
     return Path.home() / ".config" / "autostart" / AUTOSTART_FILE_NAME
 
 
-def legacy_autostart_file_path() -> Path:
-    return Path.home() / ".config" / "autostart" / LEGACY_AUTOSTART_FILE_NAME
+def legacy_autostart_file_paths() -> list[Path]:
+    return [Path.home() / ".config" / "autostart" / name for name in LEGACY_AUTOSTART_FILE_NAMES]
 
 
 def pid_file_path(project_dir: Path) -> Path:
@@ -35,9 +38,9 @@ def daemon_command(project_dir: Path, python_executable: str | None = None) -> l
     
     if is_frozen:
         # Si estamos compilados, ejecutar el binario unificado con --daemon
-        gnome_tools_exe = Path(sys.executable).parent / "gnome-extra-tools"
-        if gnome_tools_exe.exists():
-            return [str(gnome_tools_exe), "--daemon"]
+        wallvibe_exe = Path(sys.executable).parent / "wallvibe"
+        if wallvibe_exe.exists():
+            return [str(wallvibe_exe), "--daemon"]
     
     # Modo desarrollo: ejecutar app.py con --daemon
     python_bin = python_executable or sys.executable or "python3"
@@ -131,13 +134,16 @@ def stop_daemon(project_dir: Path) -> bool:
 
 
 def is_autostart_enabled() -> bool:
-    return autostart_file_path().exists() or legacy_autostart_file_path().exists()
+    if autostart_file_path().exists():
+        return True
+    return any(path.exists() for path in legacy_autostart_file_paths())
 
 
 def enable_autostart(project_dir: Path, python_executable: str | None = None) -> Path:
     desktop_path = autostart_file_path()
     desktop_path.parent.mkdir(parents=True, exist_ok=True)
-    legacy_autostart_file_path().unlink(missing_ok=True)
+    for legacy_path in legacy_autostart_file_paths():
+        legacy_path.unlink(missing_ok=True)
 
     command = daemon_command(project_dir, python_executable)
     exec_line = " ".join(_shell_quote(part) for part in command)
@@ -147,7 +153,7 @@ def enable_autostart(project_dir: Path, python_executable: str | None = None) ->
         [
             "[Desktop Entry]",
             "Type=Application",
-            "Name=GNOME Extra Tools Wallpaper Daemon",
+            "Name=WallVibe Wallpaper Daemon",
             "Comment=Rotacion de wallpapers desde config.json",
             f"Exec={exec_line}",
             f"Path={project_dir}",
@@ -164,7 +170,8 @@ def enable_autostart(project_dir: Path, python_executable: str | None = None) ->
 
 def disable_autostart() -> None:
     autostart_file_path().unlink(missing_ok=True)
-    legacy_autostart_file_path().unlink(missing_ok=True)
+    for legacy_path in legacy_autostart_file_paths():
+        legacy_path.unlink(missing_ok=True)
 
 
 def _shell_quote(value: str) -> str:

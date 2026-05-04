@@ -6,8 +6,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from gnome_tools.config import ConfigManager, resolve_config_path
-from gnome_tools.daemon_control import (
+from wallvibe_tools.config import ConfigManager, resolve_config_path
+from wallvibe_tools.daemon_control import (
     disable_autostart,
     enable_autostart,
     is_autostart_enabled,
@@ -15,7 +15,7 @@ from gnome_tools.daemon_control import (
     start_daemon,
     stop_daemon,
 )
-from gnome_tools.gnome_controls import (
+from wallvibe_tools.wallvibe_tools import (
     GSettingsError,
     detect_wallpaper_backend,
     detect_opacity_backend,
@@ -26,8 +26,8 @@ from gnome_tools.gnome_controls import (
     open_active_opacity_terminal,
     set_terminal_opacity,
 )
-from gnome_tools.i18n import set_language, t
-from gnome_tools.wallpaper import WallpaperRotator
+from wallvibe_tools.i18n import set_language, t
+from wallvibe_tools.wallpaper import WallpaperRotator
 
 # Detectar si estamos en PyInstaller para resolver rutas correctamente
 if getattr(sys, 'frozen', False):
@@ -39,13 +39,13 @@ else:
 
 CONFIG_PATH = BASE_DIR / "config.json"
 ICON_PATH = BASE_DIR / "assets" / "gnome-ico.png"
-APP_WM_CLASS = "GnomeExtraTools"
-APP_LOCK_PATH = Path.home() / ".cache" / "gnome-extra-tools" / "app.lock"
+APP_WM_CLASS = "WallVibe"
+APP_LOCK_PATH = Path.home() / ".cache" / "wallvibe" / "app.lock"
 
 LANGUAGE_CODES = {"auto", "es", "en", "zh", "ja", "de"}
 
 
-class GnomeToolsApp(tk.Tk):
+class WallVibeApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__(className=APP_WM_CLASS)
         self.config_manager = ConfigManager(CONFIG_PATH)
@@ -90,14 +90,16 @@ class GnomeToolsApp(tk.Tk):
         self._set_opacity_section_visible(False)
 
     def _set_opacity_section_visible(self, visible: bool) -> None:
-        # Este método debe ocultar o mostrar la sección de opacidad en la UI
-        # Debes implementarlo según cómo esté construida la UI (Frame, LabelFrame, etc.)
-        # Ejemplo:
-        if hasattr(self, "opacity_section"):
-            if visible:
-                self.opacity_section.grid()  # o pack(), place(), etc.
-            else:
-                self.opacity_section.grid_remove()  # o pack_forget(), place_forget(), etc.
+        if not hasattr(self, "opacity_section"):
+            return
+
+        if visible:
+            if not self.opacity_section.winfo_ismapped():
+                self.opacity_section.pack(fill=tk.X, padx=4, pady=6)
+            return
+
+        if self.opacity_section.winfo_ismapped():
+            self.opacity_section.pack_forget()
 
     def _apply_language_from_config(self) -> None:
         ui = self.config_data.get("ui", {})
@@ -330,6 +332,7 @@ class GnomeToolsApp(tk.Tk):
 
         ptyxis_frame = ttk.LabelFrame(root, text=t("ptyxis_section"), padding=10)
         ptyxis_frame.pack(fill=tk.X, padx=4, pady=6)
+        self.opacity_section = ptyxis_frame
 
         ttk.Label(ptyxis_frame, text=t("profile_id_label")).grid(row=0, column=0, sticky="w", padx=6, pady=6)
         self.profile_id_var = tk.StringVar()
@@ -391,8 +394,8 @@ class GnomeToolsApp(tk.Tk):
         wallpaper_frame.columnconfigure(1, weight=1)
 
         self.status_var = tk.StringVar(value=t("ready"))
-        status_label = ttk.Label(root, textvariable=self.status_var, anchor="w", foreground="gray")
-        status_label.pack(fill=tk.X, padx=4, pady=8)
+        self.status_label = ttk.Label(root, textvariable=self.status_var, anchor="w", foreground="gray")
+        self.status_label.pack(fill=tk.X, padx=4, pady=8)
 
         footer = ttk.Frame(root)
         footer.pack(fill=tk.X, padx=4, pady=8)
@@ -651,7 +654,7 @@ def main() -> None:
         return
 
     try:
-        app = GnomeToolsApp()
+        app = WallVibeApp()
         app.mainloop()
     finally:
         _release_app_lock(lock_handle)
@@ -684,7 +687,7 @@ def _show_already_running_warning() -> None:
         root = tk.Tk()
         root.withdraw()
         messagebox.showwarning(
-            "GNOME Extra Tools",
+            "WallVibe",
             "La aplicacion ya esta abierta en otra ventana.",
         )
         root.destroy()
@@ -697,7 +700,7 @@ if __name__ == "__main__":
     # Detectar si se solicita ejecutar el daemon
     if len(sys.argv) > 1 and sys.argv[1] == "--daemon":
         # Ejecutar en modo daemon (sin GUI)
-        from gnome_tools.daemon_main import run_daemon
+        from wallvibe_tools.daemon_main import run_daemon
         
         daemon_config = BASE_DIR / "config.json"
         daemon_pid = BASE_DIR / ".wallpaper_daemon.pid"

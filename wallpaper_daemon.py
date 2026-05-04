@@ -7,9 +7,8 @@ import sys
 import threading
 from pathlib import Path
 
-from gnome_tools.config import ConfigManager
-from gnome_tools.config import ConfigManager, resolve_config_path
-from gnome_tools.wallpaper import WallpaperRotator
+from wallvibe_tools.config import ConfigManager, resolve_config_path
+from wallvibe_tools.wallpaper import WallpaperRotator
 
 # Detectar si estamos en PyInstaller para resolver rutas correctamente
 if getattr(sys, 'frozen', False):

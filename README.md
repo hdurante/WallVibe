@@ -1,8 +1,8 @@
-# GNOME Extra Tools (Python)
+# Linux Wallpaper Vibe (Python)
 
-Proyecto open source para agregar funciones comunes y deseables de interfaz y wallpapers que normalmente no vienen integradas por defecto en GNOME.
+Proyecto open source para automatizar wallpapers y controles de terminal en Linux.
 
-App de escritorio para agregar controles de GNOME que no aparecen de forma clara en las interfaces de Ubuntu/Fedora/SUSE.
+App de escritorio para GNOME, KDE Plasma y XFCE con foco en rotacion de wallpapers y ajustes de opacidad compatibles.
 
 ## Funciones incluidas
 
@@ -13,7 +13,7 @@ App de escritorio para agregar controles de GNOME que no aparecen de forma clara
 
 ## Requisitos
 
-- Linux con GNOME y `gsettings` disponible.
+- Linux con GNOME, KDE Plasma o XFCE.
 - Python 3.10+.
 - Tkinter (preinstalado en Ubuntu, Fedora, SUSE).
 
@@ -50,7 +50,7 @@ sudo pacman -S tk
 ## Ejecutar
 
 ```bash
-cd /home/hdurante/Documentos/Workspace/Python/gnome-tools
+cd Wallbive
 python3 app.py
 ```
 
@@ -59,12 +59,12 @@ python3 app.py
 Para evitar que GNOME muestre el engrane genérico, ahora el proyecto incluye:
 
 - `assets/gnome-ico.png` (icono de la app)
-- `install_launcher.sh` (crea `~/.local/share/applications/gnome-extra-tools.desktop`)
+- `install_launcher.sh` (crea `~/.local/share/applications/wallvibe.desktop`)
 
 Pasos:
 
 ```bash
-cd /home/hdurante/Documentos/Workspace/Python/gnome-tools
+cd Wallbive
 chmod +x install_launcher.sh
 ./install_launcher.sh
 ```
@@ -89,19 +89,19 @@ Ahora puedes controlarlo directamente desde la interfaz en la seccion **Daemon p
 Tambien puedes usar comandos manuales si lo prefieres:
 
 ```bash
-cd /home/hdurante/Documentos/Workspace/Python/gnome-tools
+cd Wallbive
 python3 wallpaper_daemon.py
 ```
 
 ### Crear autostart automaticamente
 
 ```bash
-cd /home/hdurante/Documentos/Workspace/Python/gnome-tools
+cd Wallbive
 chmod +x install_autostart.sh
 ./install_autostart.sh
 ```
 
-Esto crea `~/.config/autostart/gnome-extra-tools-wallpaper.desktop`.
+Esto crea `~/.config/autostart/wallvibe-wallpaper.desktop`.
 
 ### Probar una vez (sin dejar daemon corriendo)
 
@@ -116,8 +116,8 @@ Ejemplo de entrada:
 ```ini
 [Desktop Entry]
 Type=Application
-Name=GNOME Extra Tools Wallpaper Daemon
-Exec=python3 /home/hdurante/Documentos/Workspace/Python/gnome-tools/wallpaper_daemon.py
+Name=WallVibe Wallpaper Daemon
+Exec=python3 wallpaper_daemon.py
 X-GNOME-Autostart-enabled=true
 Terminal=false
 ```
@@ -175,9 +175,9 @@ La app detecta automáticamente tu perfil actual al iniciar.
 
 Los módulos core pueden usarse desde scripts, CLI o cualquier otro framework:
 
-- `gnome_tools.config` — Gestión de configuración
-- `gnome_tools.gnome_controls` — Interfaz con gsettings
-- `gnome_tools.wallpaper` — Rotación de wallpapers
+- `wallvibe_tools.config` — Gestión de configuración
+- `wallvibe_tools.wallvibe_tools` — Interfaz con gsettings
+- `wallvibe_tools.wallpaper` — Rotación de wallpapers
 
 ---
 
@@ -199,7 +199,7 @@ Tkinter es la opción más pragmática y portátil para herramientas Linux simpl
 ## Estructura del proyecto
 
 ```
-gnome-extra-tools/
+wallvibe/
 ├── app.py                 # Interfaz Tkinter principal
 ├── install.sh             # Script de instalación automático
 ├── install_launcher.sh    # Crea launcher GNOME con icono
@@ -210,10 +210,10 @@ gnome-extra-tools/
 ├── config.json            # Configuración persistente (generado al inicio)
 ├── requirements.txt       # Sin dependencias externas (solo comentarios)
 ├── README.md              # Este archivo
-└── gnome_tools/
+└── wallvibe_tools/
     ├── __init__.py
     ├── config.py          # Gestor de configuración JSON
-    ├── gnome_controls.py  # Interfaz con gsettings
+    ├── wallvibe_tools.py  # Interfaz con gsettings
     └── wallpaper.py       # Rotación de wallpapers con threading
 ```
 

@@ -30,7 +30,7 @@ jobs:
           # Build unified executable (GUI by default, --daemon for background)
           pyinstaller \
             --onefile \
-            --name=gnome-extra-tools \
+            --name=wallvibe \
             --runtime-tmpdir /var/tmp \
             app.py
 
@@ -38,7 +38,7 @@ jobs:
         run: |
           rm -rf package-lightweight
           mkdir -p package-lightweight
-          cp dist/gnome-extra-tools package-lightweight/
+          cp dist/wallvibe package-lightweight/
           cp config.json package-lightweight/
           cp README.md package-lightweight/
           cp -r assets package-lightweight/
@@ -50,17 +50,17 @@ jobs:
       - name: Package binary (Lightweight)
         run: |
           cd package-lightweight
-          tar -czf ../release/gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz .
+          tar -czf ../release/wallvibe-linux-${{ github.ref_name }}.tar.gz .
 
       - name: Generate SHA256 (Lightweight)
         run: |
           cd release
-          sha256sum gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz > gnome-extra-tools-linux-${{ github.ref_name }}.tar.gz.sha256
+          sha256sum wallvibe-linux-${{ github.ref_name }}.tar.gz > wallvibe-linux-${{ github.ref_name }}.tar.gz.sha256
       
       - name: Upload lightweight artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gnome-extra-tools-linux-lightweight
+          name: wallvibe-linux-lightweight
           path: release/
           retention-days: 1
 
@@ -85,7 +85,7 @@ jobs:
           # Build unified executable (GUI by default, --daemon for background)
           pyinstaller \
             --onefile \
-            --name=gnome-extra-tools \
+            --name=wallvibe \
             --runtime-tmpdir /var/tmp \
             app.py
 
@@ -93,7 +93,7 @@ jobs:
         run: |
           rm -rf package-complete
           mkdir -p package-complete
-          cp dist/gnome-extra-tools package-complete/
+          cp dist/wallvibe package-complete/
           cp config.json package-complete/
           cp README.md package-complete/
           cp -r assets package-complete/
@@ -109,17 +109,17 @@ jobs:
       - name: Package binary with Wallpaper examples (Complete)
         run: |
           cd package-complete
-          tar -czf ../release/gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz .
+          tar -czf ../release/wallvibe-linux-complete-${{ github.ref_name }}.tar.gz .
 
       - name: Generate SHA256 (Complete)
         run: |
           cd release
-          sha256sum gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz > gnome-extra-tools-linux-complete-${{ github.ref_name }}.tar.gz.sha256
+          sha256sum wallvibe-linux-complete-${{ github.ref_name }}.tar.gz > wallvibe-linux-complete-${{ github.ref_name }}.tar.gz.sha256
       
       - name: Upload complete artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: gnome-extra-tools-linux-complete
+          name: wallvibe-linux-complete
           path: release/
           retention-days: 1
 
@@ -143,24 +143,24 @@ jobs:
         run: |
           echo "Release ${{ github.ref_name }}" > RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
-          echo "## GNOME Extra Tools - Linux Binary" >> RELEASE_NOTES.md
+          echo "## Linux Wallpaper Vibe - Linux Binary" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "### Available Downloads" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "#### Lightweight Version (Code only)" >> RELEASE_NOTES.md
-          echo "- **gnome-extra-tools-linux-\${{ github.ref_name }}.tar.gz**" >> RELEASE_NOTES.md
-          echo "- **gnome-extra-tools-linux-\${{ github.ref_name }}.tar.gz.sha256**" >> RELEASE_NOTES.md
+          echo "- **wallvibe-linux-\${{ github.ref_name }}.tar.gz**" >> RELEASE_NOTES.md
+          echo "- **wallvibe-linux-\${{ github.ref_name }}.tar.gz.sha256**" >> RELEASE_NOTES.md
           echo "  - Minimal installation with just the application" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "#### Complete Version (With Wallpaper Examples)" >> RELEASE_NOTES.md
-          echo "- **gnome-extra-tools-linux-complete-\${{ github.ref_name }}.tar.gz**" >> RELEASE_NOTES.md
-          echo "- **gnome-extra-tools-linux-complete-\${{ github.ref_name }}.tar.gz.sha256**" >> RELEASE_NOTES.md
+          echo "- **wallvibe-linux-complete-\${{ github.ref_name }}.tar.gz**" >> RELEASE_NOTES.md
+          echo "- **wallvibe-linux-complete-\${{ github.ref_name }}.tar.gz.sha256**" >> RELEASE_NOTES.md
           echo "  - Includes sample wallpapers for testing" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "### Installation" >> RELEASE_NOTES.md
           echo "\`\`\`bash" >> RELEASE_NOTES.md
-          echo "tar -xzf gnome-extra-tools-linux-*.tar.gz" >> RELEASE_NOTES.md
-          echo "./gnome-extra-tools" >> RELEASE_NOTES.md
+          echo "tar -xzf wallvibe-linux-*.tar.gz" >> RELEASE_NOTES.md
+          echo "./wallvibe" >> RELEASE_NOTES.md
           echo "\`\`\`" >> RELEASE_NOTES.md
       
       - name: Create GitHub Release
