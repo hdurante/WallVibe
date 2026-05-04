@@ -18,7 +18,7 @@
   "select": "選択",
   "interval_label": "間隔（分）：",
   "dark_variant_label": "ダークモードでも更新",
-  "search_subfolders_label": "サブフォルダーも検索（最大: ルート + 1階層）",
+  "search_subfolders_label": "サブフォルダーがあれば画像を検索",
   "try_now": "今すぐ試す",
   "start": "開始",
   "stop": "停止",

@@ -1,4 +1,36 @@
+
 from __future__ import annotations
+
+def set_xfce4_terminal_transparency(opacity: float) -> None:
+    """Ajusta la transparencia en xfce4-terminal editando el archivo de configuración."""
+    # El archivo de configuración suele estar en ~/.config/xfce4/terminal/terminalrc
+    config_path = Path.home() / ".config/xfce4/terminal/terminalrc"
+    if not config_path.exists():
+        raise GSettingsError("No se encontró el archivo de configuración de xfce4-terminal.")
+    lines = config_path.read_text(encoding="utf-8").splitlines()
+    new_lines = []
+    found = False
+    for line in lines:
+        if line.strip().startswith("BackgroundAlpha"):
+            found = True
+            new_lines.append(f"BackgroundAlpha={int(opacity * 100)}")
+        else:
+            new_lines.append(line)
+    if not found:
+        new_lines.append(f"BackgroundAlpha={int(opacity * 100)}")
+    config_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+
+def set_tilix_transparency(opacity: float) -> None:
+    # Tilix usa dconf
+    value = int(opacity * 100)
+    subprocess.run([
+        "dconf", "write", "/com/gexperts/Tilix/profiles/default/background-transparency", str(value)
+    ], check=False)
+
+def set_terminator_transparency(opacity: float) -> None:
+    # Terminator usa gsettings o edición de config, pero no es estándar
+    # Aquí solo se deja un placeholder
+    raise GSettingsError("Soporte para transparencia en Terminator no implementado aún.")
 
 import ast
 import os
@@ -125,6 +157,9 @@ def detect_opacity_backend() -> str | None:
     ptyxis_supported = is_ptyxis_available() and "org.gnome.Ptyxis" in schemas
     kgx_supported = is_kgx_available() and "org.gnome.Console" in schemas
     konsole_supported = is_konsole_available()
+    xfce4_terminal_supported = shutil.which("xfce4-terminal") is not None
+    tilix_supported = shutil.which("tilix") is not None
+    terminator_supported = shutil.which("terminator") is not None
 
     if any(name in desktop_hint for name in ("kde", "plasma")):
         if konsole_supported:
@@ -133,6 +168,15 @@ def detect_opacity_backend() -> str | None:
             return "kgx"
         if ptyxis_supported:
             return "ptyxis"
+        return None
+
+    if "xfce" in desktop_hint:
+        if xfce4_terminal_supported:
+            return "xfce4-terminal"
+        if tilix_supported:
+            return "tilix"
+        if terminator_supported:
+            return "terminator"
         return None
 
     # Distro-aware priority: Ubuntu usually favors Ptyxis, while Fedora/SuSE often use KGX.
@@ -149,6 +193,12 @@ def detect_opacity_backend() -> str | None:
         return "konsole"
     if kgx_supported:
         return "kgx"
+    if xfce4_terminal_supported:
+        return "xfce4-terminal"
+    if tilix_supported:
+        return "tilix"
+    if terminator_supported:
+        return "terminator"
     return None
 
 
@@ -169,7 +219,16 @@ def set_terminal_opacity(opacity: float, profile_id: str = "") -> str:
     if backend == "kgx":
         set_kgx_transparency(opacity)
         return "kgx"
-    raise GSettingsError("No se detecto un backend compatible para opacidad (Ptyxis/KGX).")
+    if backend == "xfce4-terminal":
+        set_xfce4_terminal_transparency(opacity)
+        return "xfce4-terminal"
+    if backend == "tilix":
+        set_tilix_transparency(opacity)
+        return "tilix"
+    if backend == "terminator":
+        set_terminator_transparency(opacity)
+        return "terminator"
+    raise GSettingsError("No se detecto un backend compatible para opacidad (Ptyxis/KGX/XFCE4-Terminal/Tilix/Terminator).")
 
 
 def _is_process_running(process_name: str) -> bool:
@@ -297,6 +356,8 @@ def detect_wallpaper_backend() -> str | None:
         return "kde"
     if any(name in desktop for name in ("gnome", "ubuntu")):
         return "gnome"
+    if "xfce" in desktop:
+        return "xfce"
     return None
 
 
@@ -313,7 +374,12 @@ def ensure_wayland_wallpaper_compatibility() -> str:
     if backend == "gnome":
         return backend
 
-    raise GSettingsError("Entorno de escritorio no soportado para wallpaper (soportados: GNOME y KDE).")
+    if backend == "xfce":
+        if shutil.which("xfconf-query") is None:
+            raise GSettingsError("No se encontro xfconf-query para controlar el wallpaper en XFCE.")
+        return backend
+
+    raise GSettingsError("Entorno de escritorio no soportado para wallpaper (soportados: GNOME, KDE y XFCE).")
 
 
 def _set_wallpaper_gnome(image_path: str, set_dark_variant: bool = True) -> None:
@@ -325,6 +391,25 @@ def _set_wallpaper_gnome(image_path: str, set_dark_variant: bool = True) -> None
 
 
 def _set_wallpaper_kde(image_path: str) -> None:
+    def _set_wallpaper_xfce(image_path: str) -> None:
+        """Cambia el wallpaper en XFCE usando xfconf-query."""
+        if shutil.which("xfconf-query") is None:
+            raise GSettingsError("xfconf-query no encontrado en el sistema.")
+        # Cambia el fondo en todos los monitores detectados
+        import subprocess
+        # Obtener la lista de canales y propiedades
+        props = subprocess.run([
+            "xfconf-query", "-c", "xfce4-desktop", "-l"
+        ], capture_output=True, text=True)
+        if props.returncode != 0:
+            raise GSettingsError("No se pudo obtener las propiedades de xfce4-desktop.")
+        # Buscar propiedades de fondo
+        for line in props.stdout.splitlines():
+            if "last-image" in line:
+                subprocess.run([
+                    "xfconf-query", "-c", "xfce4-desktop", "-p", line, "-s", image_path
+                ])
+        # No se lanza excepción si no hay propiedades, simplemente no cambia nada
     uri = f"file://{image_path}"
     qdbus_cmd = "qdbus6" if shutil.which("qdbus6") is not None else "qdbus"
 
@@ -358,6 +443,9 @@ def set_wallpaper(image_path: str, set_dark_variant: bool = True) -> None:
         return
     if backend == "kde":
         _set_wallpaper_kde(image_path)
+        return
+    if backend == "xfce":
+        _set_wallpaper_xfce(image_path)
         return
 
     raise GSettingsError("No se detecto backend de wallpaper compatible.")

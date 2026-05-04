@@ -69,17 +69,35 @@ class GnomeToolsApp(tk.Tk):
     def _update_wallpaper_compatibility_status(self) -> None:
         if not is_wayland_session():
             self.status_var.set("Wallpaper: solo compatible con Wayland (sesion actual no Wayland).")
+            self._set_opacity_section_visible(False)
             return
 
         backend = detect_wallpaper_backend()
         if backend == "gnome":
             self.status_var.set("Wallpaper: compatibilidad Wayland activa (backend GNOME).")
+            self._set_opacity_section_visible(is_opacity_supported_terminal_available())
             return
         if backend == "kde":
             self.status_var.set("Wallpaper: compatibilidad Wayland activa (backend KDE Plasma).")
+            self._set_opacity_section_visible(is_opacity_supported_terminal_available())
+            return
+        if backend == "xfce":
+            self.status_var.set("Wallpaper: compatibilidad Wayland activa (backend XFCE).")
+            self._set_opacity_section_visible(is_opacity_supported_terminal_available())
             return
 
-        self.status_var.set("Wallpaper: entorno no soportado. Fase siguiente: XFCE Wayland.")
+        self.status_var.set("Wallpaper: solo soportado en GNOME, KDE Plasma y XFCE (Wayland). Otros escritorios no son compatibles.")
+        self._set_opacity_section_visible(False)
+
+    def _set_opacity_section_visible(self, visible: bool) -> None:
+        # Este método debe ocultar o mostrar la sección de opacidad en la UI
+        # Debes implementarlo según cómo esté construida la UI (Frame, LabelFrame, etc.)
+        # Ejemplo:
+        if hasattr(self, "opacity_section"):
+            if visible:
+                self.opacity_section.grid()  # o pack(), place(), etc.
+            else:
+                self.opacity_section.grid_remove()  # o pack_forget(), place_forget(), etc.
 
     def _apply_language_from_config(self) -> None:
         ui = self.config_data.get("ui", {})

@@ -18,7 +18,7 @@
   "select": "选择",
   "interval_label": "间隔（分钟）：",
   "dark_variant_label": "也在深色模式下更新",
-  "search_subfolders_label": "搜索子文件夹（最多：根目录 + 1 层）",
+  "search_subfolders_label": "如果有子文件夹则查找图片",
   "try_now": "立即尝试",
   "start": "开始",
   "stop": "停止",
