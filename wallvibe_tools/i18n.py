@@ -1,3 +1,14 @@
+"""Internationalization helpers for WallVibe.
+
+Loads locale JSON files, detects language preferences, and exposes
+translation helpers used by GUI and daemon messages.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 import json
 import locale
 from pathlib import Path

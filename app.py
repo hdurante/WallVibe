@@ -1,3 +1,14 @@
+"""WallVibe desktop GUI entry point.
+
+Provides the Tkinter user interface to configure wallpaper rotation,
+terminal opacity, daemon lifecycle, and localization settings.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import fcntl
@@ -697,11 +708,48 @@ def _show_already_running_warning() -> None:
 
 
 if __name__ == "__main__":
+    # --- Detección de entorno KDE y qdbus antes de iniciar la app ---
+    import os
+    import shutil
+    import tkinter as tk
+    from tkinter import messagebox
+
+
+    QDBUS_MSG = (
+        "\nPara usar esta aplicación en KDE Plasma, debe instalar qdbus.\n"
+        "Ejecute el siguiente comando según su distribución:\n\n"
+        "Fedora/RHEL:   sudo dnf install qdbus\n"
+        "Ubuntu/Debian: sudo apt install qdbus\n"
+        "Arch/Manjaro:  sudo pacman -S qdbus\n"
+        "\nLuego reinicie la aplicación.\n"
+    )
+
+    def _show_missing_qdbus():
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror(
+            "WallVibe - Dependencia faltante",
+            "Falta el comando qdbus.\n\nConsulta la terminal para instrucciones de instalación."
+        )
+        root.destroy()
+
+
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+    kde_full = os.environ.get("KDE_FULL_SESSION", "")
+
+    if "kde" in desktop or "plasma" in desktop or kde_full:
+        if shutil.which("qdbus6") is None and shutil.which("qdbus") is None:
+            print(QDBUS_MSG)
+            try:
+                _show_missing_qdbus()
+            except Exception:
+                pass
+            sys.exit(1)
+
     # Detectar si se solicita ejecutar el daemon
     if len(sys.argv) > 1 and sys.argv[1] == "--daemon":
         # Ejecutar en modo daemon (sin GUI)
         from wallvibe_tools.daemon_main import run_daemon
-        
         daemon_config = BASE_DIR / "config.json"
         daemon_pid = BASE_DIR / ".wallpaper_daemon.pid"
         run_daemon(daemon_config, daemon_pid)

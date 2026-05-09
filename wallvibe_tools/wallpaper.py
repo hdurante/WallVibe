@@ -1,3 +1,14 @@
+"""Wallpaper rotation engine for WallVibe.
+
+Implements image discovery and randomized rotation with interval-based
+threading, optional subfolder scanning, and callback hooks.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import random

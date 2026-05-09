@@ -1,3 +1,14 @@
+"""Desktop integration helpers for WallVibe.
+
+Contains gsettings and environment integration helpers for wallpaper
+backends, terminal opacity handling, and compatibility checks.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import ast

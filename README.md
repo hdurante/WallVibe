@@ -1,220 +1,209 @@
-# Linux Wallpaper Vibe (Python)
+# Linux Wallpaper Vibe (WallVibe)
 
-Proyecto open source para automatizar wallpapers y controles de terminal en Linux.
+Open source Linux desktop app to manage wallpaper rotation and terminal opacity in a practical way.
 
-App de escritorio para GNOME, KDE Plasma y XFCE con foco en rotacion de wallpapers y ajustes de opacidad compatibles.
+WallVibe targets GNOME, KDE Plasma, and XFCE environments, with persistent configuration and optional daemon mode.
 
-## Funciones incluidas
+## Features
 
-- Ajuste de opacidad para perfiles de Ptyxis por `gsettings`.
-- Rotación aleatoria de wallpapers por carpeta cada X minutos.
-- Configuración persistente en `config.json` para evitar cambios de código.
-- Interfaz simple y funcional con Tkinter.
+- Random wallpaper rotation from a selected folder at configurable intervals.
+- Terminal opacity control for Ptyxis profiles through gsettings.
+- Persistent JSON configuration file (config.json).
+- GUI app built with Tkinter.
+- Optional daemon mode for wallpaper rotation after login.
 
-## Requisitos
+## Requirements
 
-- Linux con GNOME, KDE Plasma o XFCE.
-- Python 3.10+.
-- Tkinter (preinstalado en Ubuntu, Fedora, SUSE).
+- Linux desktop session: GNOME, KDE Plasma, or XFCE.
+- Python 3.10+
+- Tkinter
 
-## Instalación
+### Install Tkinter by distro
 
-### Automática (recomendado)
+Ubuntu/Debian:
+
+```bash
+sudo apt-get install python3-tk
+```
+
+Fedora/RHEL:
+
+```bash
+sudo dnf install python3-tkinter
+```
+
+SUSE:
+
+```bash
+sudo zypper install python3-tk
+```
+
+Arch/Manjaro:
+
+```bash
+sudo pacman -S tk
+```
+
+## Installation
+
+Automatic setup (recommended):
+
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-### Manual por distribución
+## Run
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install python3-tk
-```
-
-**Fedora/RHEL:**
-```bash
-sudo dnf install python3-tkinter
-```
-
-**SUSE:**
-```bash
-sudo zypper install python3-tk
-```
-
-**Arch/Manjaro:**
-```bash
-sudo pacman -S tk
-```
-
-## Ejecutar
+From the project root:
 
 ```bash
-cd Wallbive
 python3 app.py
 ```
 
-## Icono de la app en GNOME
+## GNOME Launcher and App Icon
 
-Para evitar que GNOME muestre el engrane genérico, ahora el proyecto incluye:
+The project includes:
 
-- `assets/gnome-ico.png` (icono de la app)
-- `install_launcher.sh` (crea `~/.local/share/applications/wallvibe.desktop`)
+- assets/gnome-ico.png
+- install_launcher.sh
 
-Pasos:
+Create local launcher:
 
 ```bash
-cd Wallbive
 chmod +x install_launcher.sh
 ./install_launcher.sh
 ```
 
-Si quieres tu propio icono, crea o exporta un PNG de 256x256 y guárdalo en:
+This generates:
 
-`assets/gnome-ico.png`
+- ~/.local/share/applications/wallvibe.desktop
 
-La app cargará ese PNG como icono de ventana y el launcher lo usará automáticamente.
+## Daemon Mode (persistent wallpaper rotation)
 
-## Rotacion al cerrar GUI o reiniciar sesion
+You can manage the daemon from the GUI or run it manually.
 
-La rotacion iniciada desde la ventana se detiene al cerrar la app.
-Para mantenerla activa automaticamente al iniciar sesion, usa el daemon sin GUI.
-Ahora puedes controlarlo directamente desde la interfaz en la seccion **Daemon persistente**:
-
-- Iniciar daemon
-- Detener daemon
-- Activar autostart
-- Desactivar autostart
-
-Tambien puedes usar comandos manuales si lo prefieres:
+Run daemon manually:
 
 ```bash
-cd Wallbive
 python3 wallpaper_daemon.py
 ```
 
-### Crear autostart automaticamente
-
-```bash
-cd Wallbive
-chmod +x install_autostart.sh
-./install_autostart.sh
-```
-
-Esto crea `~/.config/autostart/wallvibe-wallpaper.desktop`.
-
-### Probar una vez (sin dejar daemon corriendo)
+Run one cycle only:
 
 ```bash
 python3 wallpaper_daemon.py --once
 ```
 
-### Si prefieres .desktop manual
-
-Ejemplo de entrada:
-
-```ini
-[Desktop Entry]
-Type=Application
-Name=WallVibe Wallpaper Daemon
-Exec=python3 wallpaper_daemon.py
-X-GNOME-Autostart-enabled=true
-Terminal=false
-```
-
-No necesitas `.sh` para esta funcionalidad: el proyecto ya controla autostart y daemon de forma nativa.
-
-## Crear ejecutable con PyInstaller (opcional)
-
-Si quieres distribuir como binario sin requerir Python:
+Enable autostart helper:
 
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed app.py
-# Genera: ./dist/app (binario ejecutable ~70MB)
-./dist/app
+chmod +x install_autostart.sh
+./install_autostart.sh
 ```
 
-## Configuración
+This generates:
 
-Al primer arranque se crea `config.json` automáticamente. Ejemplo:
+- ~/.config/autostart/wallvibe-wallpaper.desktop
+
+## Configuration
+
+On first run, the app creates config.json automatically.
+
+Example:
 
 ```json
 {
+  "app": {
+    "first_run_initialized": true,
+    "distro_folder_migrated": true
+  },
+  "ui": {
+    "language": "auto"
+  },
   "ptyxis": {
     "opacity": 0.85
   },
   "wallpaper": {
-    "folder": "/ruta/a/imagenes",
+    "folder": "./Wallpaper/Debian",
     "interval_minutes": 60,
     "extensions": [".jpg", ".jpeg", ".png", ".bmp", ".svg", ".webp"],
-    "set_dark_variant": true
+    "set_dark_variant": true,
+    "search_subfolders": false
   }
 }
 ```
 
-## Licencia de wallpapers de ejemplo
+### KDE Plasma Note
 
-Las imagenes dentro de la carpeta `Wallpaper/` se distribuyen con licencia propia para evitar ambiguedades con la licencia del codigo.
+For KDE wallpaper control, install qdbus or qdbus6.
 
-- Licencia: CC BY 4.0
-- Detalle: `Wallpaper/LICENSE.md`
-- Contexto y uso: `Wallpaper/README.md`
-
-## Nota sobre el ID de perfil de Ptyxis
-
-El comando equivalente es:
+Fedora/RHEL:
 
 ```bash
-gsettings set org.gnome.Ptyxis.Profile:/org/gnome/Ptyxis/Profiles/<id>/ opacity 0.85
+sudo dnf install qdbus
 ```
 
-La app detecta automáticamente tu perfil actual al iniciar.
+Ubuntu/Debian:
 
-## Módulos genéricos (sin dependencia GUI)
-
-Los módulos core pueden usarse desde scripts, CLI o cualquier otro framework:
-
-- `wallvibe_tools.config` — Gestión de configuración
-- `wallvibe_tools.wallvibe_tools` — Interfaz con gsettings
-- `wallvibe_tools.wallpaper` — Rotación de wallpapers
-
----
-
-## ¿Por qué Tkinter?
-
-### Compatibilidad multiplataforma
-| Aspecto | Tkinter | GTK+4 | Qt5 |
-|--------|---------|--------|-----|
-| **Preinstalado Linux** | ✅ 99% | ⚠️ 50% | ⚠️ 30% |
-| **Dependencias pip** | ❌ 0 | ✅ 1 | ✅ 2+ |
-| **Tamaño** | 2 MB | 50 MB | 200+ MB |
-| **Compilación en venv** | ✅ Automática | ❌ Requiere libs | ❌ Requiere libs |
-| **PyInstaller** | ✅ Automático | ⚠️ Manual | ⚠️ Manual |
-
-Tkinter es la opción más pragmática y portátil para herramientas Linux simples.
-
----
-
-## Estructura del proyecto
-
+```bash
+sudo apt install qdbus
 ```
+
+Arch/Manjaro:
+
+```bash
+sudo pacman -S qdbus
+```
+
+## Build Binary (optional)
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed app.py
+./dist/wallvibe
+```
+
+## Core Modules
+
+- wallvibe_tools.config: configuration management
+- wallvibe_tools.wallvibe_tools: gsettings and desktop integration helpers
+- wallvibe_tools.wallpaper: wallpaper rotation logic
+
+## Contact
+
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+
+## Author
+
+- Hector Manuel Durante Nunez
+
+## License
+
+Code license:
+
+- MIT License (see LICENSE)
+
+Wallpaper samples license:
+
+- CC BY 4.0 (see Wallpaper/LICENSE.md)
+- Additional notes: Wallpaper/README.md
+
+## Project Structure
+
+```text
 wallvibe/
-├── app.py                 # Interfaz Tkinter principal
-├── install.sh             # Script de instalación automático
-├── install_launcher.sh    # Crea launcher GNOME con icono
-├── install_autostart.sh   # Crea el .desktop en ~/.config/autostart
+├── app.py
+├── wallpaper_daemon.py
+├── config.json
+├── install.sh
+├── install_launcher.sh
+├── install_autostart.sh
 ├── assets/
-│   └── gnome-ico.png      # Icono personalizado de la app
-├── wallpaper_daemon.py    # Rotación sin GUI para autostart/login
-├── config.json            # Configuración persistente (generado al inicio)
-├── requirements.txt       # Sin dependencias externas (solo comentarios)
-├── README.md              # Este archivo
+├── locale/
+├── Wallpaper/
 └── wallvibe_tools/
-    ├── __init__.py
-    ├── config.py          # Gestor de configuración JSON
-    ├── wallvibe_tools.py  # Interfaz con gsettings
-    └── wallpaper.py       # Rotación de wallpapers con threading
 ```
 
 

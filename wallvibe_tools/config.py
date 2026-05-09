@@ -1,3 +1,14 @@
+"""Configuration management utilities for WallVibe.
+
+Handles default values, distro-aware first-run wallpaper folder selection,
+JSON config loading/saving, and relative path resolution.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import json
@@ -27,6 +38,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
 
 DEFAULT_DISTRO_FOLDERS = {
     "./Wallpaper",
+    "./Wallpaper/Debian",
+    "./Wallpaper/RHEL",
     "./Wallpaper/Ubuntu",
     "./Wallpaper/Fedora",
     "./Wallpaper/SuSE",
@@ -58,6 +71,10 @@ def _detect_first_run_wallpaper_folder() -> str:
     distro_like = info.get("id_like", "")
     haystack = f"{distro_id} {distro_like}"
 
+    if "debian" in haystack:
+        return "./Wallpaper/Debian"
+    if any(name in haystack for name in ("rhel", "redhat", "red hat", "rocky", "almalinux", "centos")):
+        return "./Wallpaper/RHEL"
     if any(name in haystack for name in ("opensuse", "suse", "sle")):
         return "./Wallpaper/SuSE"
     if "fedora" in haystack:

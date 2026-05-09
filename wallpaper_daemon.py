@@ -1,3 +1,14 @@
+"""WallVibe wallpaper daemon entry point.
+
+Runs wallpaper rotation as a background process, loading settings from
+the project configuration and supporting one-shot and continuous modes.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import argparse

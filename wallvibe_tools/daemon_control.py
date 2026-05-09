@@ -1,3 +1,14 @@
+"""Daemon control helpers for WallVibe.
+
+Provides utilities to start/stop the wallpaper daemon, manage PID checks,
+and enable or disable desktop autostart entries.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import os

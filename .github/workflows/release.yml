@@ -98,7 +98,7 @@ jobs:
           cp README.md package-complete/
           cp -r assets package-complete/
           cp -r locale package-complete/
-          mkdir -p package-complete/Wallpaper/Ubuntu package-complete/Wallpaper/Fedora package-complete/Wallpaper/SuSE
+          mkdir -p package-complete/Wallpaper/Debian package-complete/Wallpaper/RHEL package-complete/Wallpaper/Ubuntu package-complete/Wallpaper/Fedora package-complete/Wallpaper/SuSE
           if [ -d Wallpaper ]; then
             cp -a Wallpaper/. package-complete/Wallpaper/
           fi

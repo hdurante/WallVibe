@@ -1,3 +1,14 @@
+"""Main daemon runtime logic for WallVibe.
+
+Defines the daemon lifecycle, signal handling, wallpaper rotator loading,
+and CLI flow used by daemon-mode execution.
+
+Author: Hector Manuel Durante Nunez
+Contact:
+- LinkedIn: https://www.linkedin.com/in/hdurante/
+- GitHub: https://github.com/hdurante/
+"""
+
 from __future__ import annotations
 
 import argparse
