@@ -8,7 +8,7 @@ OLD_DESKTOP_FILE="$APPLICATIONS_DIR/gnome-tools.desktop"
 OLD_DESKTOP_FILE_2="$APPLICATIONS_DIR/gnome-extra-tools.desktop"
 PYTHON_BIN="$(command -v python3)"
 
-ICON_PATH="$PROJECT_DIR/assets/gnome-ico.png"
+ICON_PATH="$PROJECT_DIR/assets/WallVibe"
 
 if [ ! -f "$ICON_PATH" ]; then
     echo "No se encontro el icono requerido: $ICON_PATH"

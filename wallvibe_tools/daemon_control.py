@@ -24,7 +24,7 @@ LEGACY_AUTOSTART_FILE_NAMES = (
     "gnome-extra-tools-wallpaper.desktop",
 )
 PID_FILE_NAME = ".wallpaper_daemon.pid"
-ICON_FILE_NAME = "gnome-ico.png"
+ICON_FILE_NAME = "WallVibe"
 
 
 def autostart_file_path() -> Path:

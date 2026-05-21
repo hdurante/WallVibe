@@ -7,7 +7,7 @@ DESKTOP_FILE="$AUTOSTART_DIR/wallvibe-wallpaper.desktop"
 OLD_DESKTOP_FILE="$AUTOSTART_DIR/gnome-tools-wallpaper.desktop"
 OLD_DESKTOP_FILE_2="$AUTOSTART_DIR/gnome-extra-tools-wallpaper.desktop"
 PYTHON_BIN="$(command -v python3)"
-ICON_PATH="$PROJECT_DIR/assets/gnome-ico.png"
+ICON_PATH="$PROJECT_DIR/assets/WallVibe"
 
 mkdir -p "$AUTOSTART_DIR"
 rm -f "$OLD_DESKTOP_FILE"

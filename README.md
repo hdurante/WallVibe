@@ -65,7 +65,7 @@ python3 app.py
 
 The project includes:
 
-- assets/gnome-ico.png
+- assets/WallVibe
 - install_launcher.sh
 
 Create local launcher:
