@@ -49,7 +49,7 @@ else:
     BASE_DIR = Path(__file__).parent
 
 CONFIG_PATH = BASE_DIR / "config.json"
-ICON_PATH = BASE_DIR / "assets" / "gnome-ico.png"
+ICON_PATH = BASE_DIR / "assets" / "WallVibe.png"
 APP_WM_CLASS = "WallVibe"
 APP_LOCK_PATH = Path.home() / ".cache" / "wallvibe" / "app.lock"
 
@@ -128,7 +128,60 @@ class WallVibeApp(tk.Tk):
         tools_menu = tk.Menu(menu_bar, tearoff=0)
         tools_menu.add_command(label=t("menu_select_language"), command=self.open_language_dialog)
         menu_bar.add_cascade(label=t("menu_tools"), menu=tools_menu)
+
+        about_menu = tk.Menu(menu_bar, tearoff=0)
+        about_menu.add_command(label="Acerca de", command=self.show_about_dialog)
+        menu_bar.add_cascade(label="Acerca de", menu=about_menu)
+
         self.config(menu=menu_bar)
+
+    def show_about_dialog(self) -> None:
+        import webbrowser
+        about_text = (
+            "WallVibe\n\n"
+            "Provee una interfaz Tkinter para configurar la rotación de fondos de pantalla,\n"
+            "opacidad de terminal, ciclo de vida del daemon y localización.\n\n"
+            "Autor: Hector Manuel Durante Nunez\n"
+            "Contacto:\n"
+            "- LinkedIn: https://www.linkedin.com/in/hdurante/\n"
+            "- GitHub: https://github.com/hdurante/\n"
+        )
+
+        dialog = tk.Toplevel(self)
+        dialog.title("Acerca de WallVibe")
+        dialog.transient(self)
+        dialog.resizable(False, False)
+        dialog.geometry("440x260")
+
+        frame = ttk.Frame(dialog, padding=12)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        text = tk.Text(frame, wrap="word", height=10, width=54, font=("TkDefaultFont", 9))
+        text.insert("1.0", about_text)
+        text.config(state="disabled", cursor="arrow", bg=dialog.cget("bg"), relief="flat")
+        text.pack(fill=tk.BOTH, expand=True)
+
+        # Hacer los enlaces clicables
+        def open_link(event, url):
+            webbrowser.open_new(url)
+
+        # Insertar tags para los enlaces
+        def tag_url(url, display_text):
+            idx = text.search(url, "1.0", tk.END)
+            if idx:
+                end_idx = f"{idx}+{len(url)}c"
+                text.tag_add(url, idx, end_idx)
+                text.tag_config(url, foreground="blue", underline=True)
+                text.tag_bind(url, "<Button-1>", lambda e, u=url: open_link(e, u))
+
+        text.config(state="normal")
+        tag_url("https://www.linkedin.com/in/hdurante/", "LinkedIn")
+        tag_url("https://github.com/hdurante/", "GitHub")
+        text.config(state="disabled")
+
+        # Botón para cerrar
+        btn = ttk.Button(frame, text="Cerrar", command=dialog.destroy)
+        btn.pack(pady=8)
 
     def _snapshot_form_state(self) -> dict[str, str | bool]:
         state: dict[str, str | bool] = {}
