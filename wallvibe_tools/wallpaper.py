@@ -35,6 +35,26 @@ class WallpaperRotator:
 
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
+        self._image_pool: list[Path] = []
+        self._last_chosen: Path | None = None
+
+    def _next_image(self, images: list[Path]) -> Path:
+        # Rebuild pool when empty or when image set changed.
+        if not self._image_pool or set(self._image_pool) != set(images):
+            self._image_pool = list(images)
+            random.shuffle(self._image_pool)
+
+            # Avoid repeating the same image between shuffle cycles when possible.
+            if (
+                self._last_chosen is not None
+                and len(self._image_pool) > 1
+                and self._image_pool[0] == self._last_chosen
+            ):
+                self._image_pool[0], self._image_pool[-1] = self._image_pool[-1], self._image_pool[0]
+
+        chosen = self._image_pool.pop(0)
+        self._last_chosen = chosen
+        return chosen
 
     def _load_images(self) -> list[Path]:
         if not self.folder.exists() or not self.folder.is_dir():
@@ -67,7 +87,7 @@ class WallpaperRotator:
         if not images:
             raise FileNotFoundError("No se encontraron imagenes en la carpeta seleccionada.")
 
-        chosen = random.choice(images)
+        chosen = self._next_image(images)
         set_wallpaper(str(chosen.resolve()), set_dark_variant=self.set_dark_variant)
         return chosen
 
